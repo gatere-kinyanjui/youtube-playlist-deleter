@@ -196,7 +196,7 @@ export async function searchAndSelect(playlists: Playlist[]): Promise<Playlist[]
     if (sel === 'all') {
       selected = matches
     } else {
-      const nums = sel.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 1 && n <= matches.length)
+      const nums = [...new Set(sel.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 1 && n <= matches.length))]
       selected = nums.map(n => matches[n - 1])
     }
 

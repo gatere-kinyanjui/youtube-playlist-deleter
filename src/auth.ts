@@ -45,7 +45,7 @@ function loadTokens(): TokenData | null {
 }
 
 function saveTokens(data: TokenData): void {
-  fs.writeFileSync(TOKENS_PATH, JSON.stringify(data, null, 2), 'utf8')
+  fs.writeFileSync(TOKENS_PATH, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 })
 }
 
 function isExpired(tokens: TokenData): boolean {
