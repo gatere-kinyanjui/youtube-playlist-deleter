@@ -135,7 +135,8 @@ async function runTag(token: string, playlists: Playlist[]): Promise<void> {
   let renamedCount = 0
   for (const r of toRename) {
     try {
-      await withTokenRefresh(token, t => renamePlaylist(t, r.playlist.id, r.newTitle, r.playlist.description))
+      const { token: newToken } = await withTokenRefresh(token, t => renamePlaylist(t, r.playlist.id, r.newTitle, r.playlist.description))
+      token = newToken
       renamedCount++
       showProgress(renamedCount, toRename.length, 'Renaming')
     } catch (err: unknown) {
