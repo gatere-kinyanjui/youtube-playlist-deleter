@@ -1,0 +1,15 @@
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 24px;
+  padding: 12px 24px; background: var(--surface);
+  border-bottom: var(--border); box-shadow: 0 2px 0 var(--ink);
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; }
+.nav-title { font-family: var(--font-display); font-weight: 800; font-size: 18px; }
+.nav-links { display: flex; gap: 4px; flex: 1; }
+.nav-link {
+  padding: 6px 14px; font-weight: 600; font-size: 14px;
+  border: 2px solid transparent;
+}
+.nav-link:hover { border-color: var(--ink); }
+.nav-link.active { border-color: var(--ink); background: var(--yellow); }

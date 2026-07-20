@@ -1,0 +1,14 @@
+:root {
+  --bg:       #F5F0E8;
+  --ink:      #0A0A0A;
+  --pink:     #FF2D55;
+  --yellow:   #FFE600;
+  --blue:     #0057FF;
+  --green:    #00D084;
+  --surface:  #FFFFFF;
+  --border:   2px solid var(--ink);
+  --shadow:   4px 4px 0 var(--ink);
+  --shadow-lg:6px 6px 0 var(--ink);
+  --font-display: 'Syne', sans-serif;
+  --font-ui:      'Space Grotesk', sans-serif;
+}
