@@ -20,6 +20,6 @@ export class AuthController {
 
   @Get('logout')
   logout(@Req() req: Request, @Res() res: Response): void {
-    req.session.destroy(() => res.redirect(process.env.FRONTEND_URL ?? '/'))
+    req.session.destroy(() => res.json({ ok: true }))
   }
 }

@@ -21,10 +21,12 @@ async function bootstrap() {
 
   // Only enable CORS in development
   if (process.env.NODE_ENV !== 'production') {
-    app.enableCors({ origin: 'http://localhost:6173', credentials: true })
+    const corsOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:6173'
+    app.enableCors({ origin: corsOrigin, credentials: true })
   }
 
-  await app.listen(process.env.PORT ?? 6000)
-  console.log(`Server running on http://localhost:${process.env.PORT ?? 6000}`)
+  const port = process.env.PORT ?? 6000
+  await app.listen(port, '0.0.0.0')
+  console.log(`Server running on http://0.0.0.0:${port}`)
 }
 bootstrap()

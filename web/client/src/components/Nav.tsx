@@ -14,7 +14,11 @@ export function Nav() {
         <NavLink to="/tag"        className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>[SPO]</NavLink>
         <NavLink to="/recent"     className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>Recent</NavLink>
       </div>
-      <a href="/auth/logout" className="btn btn-ghost" style={{fontSize:13}}>Log out</a>
+      <button
+        className="btn btn-ghost"
+        style={{fontSize:13}}
+        onClick={() => fetch('/auth/logout', { credentials: 'include' }).finally(() => { window.location.href = '/login' })}
+      >Log out</button>
     </nav>
   )
 }
