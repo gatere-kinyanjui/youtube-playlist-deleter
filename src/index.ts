@@ -10,6 +10,8 @@ import {
   confirmRenames,
   showProgress,
   showSummary,
+  promptTimeRange,
+  reviewRecentDeletions,
 } from './tui'
 import { Playlist, PlaylistRename } from './types'
 
@@ -169,6 +171,35 @@ async function runSearch(token: string, playlists: Playlist[]): Promise<string> 
   return t
 }
 
+// ─── Mode: delete by recency ─────────────────────────────────────────────────
+
+async function runDeleteRecent(token: string, playlists: Playlist[]): Promise<string> {
+  const { ms, label } = await promptTimeRange()
+  const now = Date.now()
+  const recent = playlists.filter(p => now - new Date(p.publishedAt).getTime() < ms)
+
+  if (recent.length === 0) {
+    console.log(`\n  No playlists created in the last ${label}.\n`)
+    return token
+  }
+
+  console.log(`\n  Found ${recent.length} playlist${recent.length !== 1 ? 's' : ''} created in the last ${label}.\n`)
+
+  const selected = await reviewRecentDeletions(recent, label)
+  if (selected.length === 0) {
+    console.log('\n  No playlists selected.\n')
+    return token
+  }
+
+  const confirmed = await confirmDeletion(selected)
+  if (!confirmed) { console.log('\n  Cancelled.\n'); return token }
+
+  console.log()
+  const { deleted, token: t } = await runDeletions(token, selected)
+  showSummary(deleted, `playlist${deleted !== 1 ? 's' : ''} deleted`)
+  return t
+}
+
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
 process.on('SIGINT', () => {
@@ -185,9 +216,10 @@ async function run(): Promise<void> {
     if (choice === 'exit') break
 
     try {
-      if (choice === 'deduplicate') token = await runDeduplicate(token, playlists)
-      if (choice === 'tag')         token = await runTag(token, playlists)
-      if (choice === 'search')      token = await runSearch(token, playlists)
+      if (choice === 'deduplicate')   token = await runDeduplicate(token, playlists)
+      if (choice === 'tag')           token = await runTag(token, playlists)
+      if (choice === 'search')        token = await runSearch(token, playlists)
+      if (choice === 'delete-recent') token = await runDeleteRecent(token, playlists)
     } catch (err: unknown) {
       process.stderr.write(`\nError: ${(err as Error).message}\n`)
     }
