@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { AuthService } from '../auth/auth.service'
 import { DuplicateGroup, MusicProvider, MUSIC_PROVIDER, Playlist } from '../providers/music-provider.interface'
 import { TokenData } from '../auth/token-data.interface'
 
@@ -11,10 +12,14 @@ interface ListFilters {
 
 @Injectable()
 export class PlaylistsService {
-  constructor(@Inject(MUSIC_PROVIDER) private readonly provider: MusicProvider) {}
+  constructor(
+    @Inject(MUSIC_PROVIDER) private readonly provider: MusicProvider,
+    private readonly authService: AuthService,
+  ) {}
 
   async listPlaylists(token: TokenData, filters: ListFilters = {}): Promise<Playlist[]> {
-    const playlists = await this.provider.listPlaylists(token.access_token)
+    const accessToken = await this.authService.getValidAccessToken(token)
+    const playlists = await this.provider.listPlaylists(accessToken)
     let result = playlists
 
     if (filters.search) {
@@ -29,7 +34,8 @@ export class PlaylistsService {
   }
 
   async findDuplicates(token: TokenData): Promise<DuplicateGroup[]> {
-    const playlists = await this.provider.listPlaylists(token.access_token)
+    const accessToken = await this.authService.getValidAccessToken(token)
+    const playlists = await this.provider.listPlaylists(accessToken)
     const byName = new Map<string, Playlist[]>()
     for (const p of playlists) {
       const group = byName.get(p.title) ?? []
@@ -50,7 +56,13 @@ export class PlaylistsService {
   }
 
   async tagCandidates(token: TokenData): Promise<Playlist[]> {
-    const playlists = await this.provider.listPlaylists(token.access_token)
+    const accessToken = await this.authService.getValidAccessToken(token)
+    const playlists = await this.provider.listPlaylists(accessToken)
     return playlists.filter(p => !p.title.startsWith(SPO_PREFIX))
+  }
+
+  async renameOne(token: TokenData, id: string, title: string, description: string): Promise<void> {
+    const accessToken = await this.authService.getValidAccessToken(token)
+    await this.provider.renamePlaylist(accessToken, id, title, description)
   }
 }
