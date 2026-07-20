@@ -28,7 +28,7 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
         if (data.complete) setTimeout(onDone, 1200)
       }
     }
-    es.onerror = () => es.close()
+    es.onerror = () => { es.close(); onDone() }
     return () => { es.close() }
   }, [jobId, onDone])
 

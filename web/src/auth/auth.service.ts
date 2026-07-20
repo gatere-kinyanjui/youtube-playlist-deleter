@@ -20,6 +20,9 @@ export class AuthService {
         grant_type: 'refresh_token',
       }),
     })
+    if (!res.ok) {
+      throw new Error(`Token refresh failed: ${res.status}`)
+    }
     const data = await res.json() as { access_token: string; expires_in: number }
     token.access_token = data.access_token
     token.expiry_date = Date.now() + data.expires_in * 1000

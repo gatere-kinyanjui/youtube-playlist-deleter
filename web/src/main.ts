@@ -4,6 +4,10 @@ import { AppModule } from './app.module'
 const session = require('express-session')
 
 async function bootstrap() {
+  if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET must be set in production')
+  }
+
   const app = await NestFactory.create(AppModule)
 
   app.use(

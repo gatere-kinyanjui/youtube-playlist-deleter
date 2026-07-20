@@ -72,6 +72,6 @@ export class JobsService {
 
     subject.next({ data: { done, total, complete: true } })
     subject.complete()
-    this.jobs.delete(jobId)
+    setTimeout(() => this.jobs.delete(jobId), 30_000)
   }
 }

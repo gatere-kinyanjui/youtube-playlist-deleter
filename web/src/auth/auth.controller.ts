@@ -15,11 +15,11 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   callback(@Req() req: Request, @Res() res: Response): void {
     req.session.token = req.user as TokenData
-    res.redirect('http://localhost:5173')
+    res.redirect('/')
   }
 
   @Get('logout')
   logout(@Req() req: Request, @Res() res: Response): void {
-    req.session.destroy(() => res.redirect('http://localhost:5173'))
+    req.session.destroy(() => res.redirect('/'))
   }
 }
