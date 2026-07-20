@@ -50,7 +50,7 @@ export async function promptTimeRange(): Promise<{ ms: number; label: string }> 
     const ms = parseTimeRange(raw)
     if (ms !== null) {
       rl.close()
-      return { ms, label: raw }
+      return { ms, label: raw.toLowerCase() }
     }
     console.log(dim('\n  Invalid range. Try: 6 hours, 3 days, 2 weeks, 1 month\n'))
     await prompt(rl, dim('  Press Enter to try again...'))
