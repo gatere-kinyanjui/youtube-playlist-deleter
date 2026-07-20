@@ -11,7 +11,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: config.getOrThrow('GOOGLE_CLIENT_ID'),
       clientSecret: config.getOrThrow('GOOGLE_CLIENT_SECRET'),
-      callbackURL: 'http://localhost:3000/auth/callback',
+      callbackURL: 'http://localhost:6000/auth/callback',
       scope: ['https://www.googleapis.com/auth/youtube'],
       accessType: 'offline',
       prompt: 'consent',
