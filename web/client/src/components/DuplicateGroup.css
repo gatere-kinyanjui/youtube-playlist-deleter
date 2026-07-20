@@ -1,0 +1,15 @@
+.dg-card { padding: 0; overflow: hidden; margin-bottom: 16px; }
+.dg-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--bg); border-bottom: var(--border);
+  cursor: pointer; font-family: var(--font-display); font-size: 15px;
+}
+.dg-header:hover { background: var(--yellow); }
+.dg-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #eee; }
+.dg-row.keep   { background: rgba(0,208,132,0.08); }
+.dg-row.delete { background: rgba(255,45,85,0.06); }
+.dg-badge { font-size: 11px; font-weight: 800; font-family: var(--font-display); min-width: 58px; }
+.dg-row.keep   .dg-badge { color: var(--green); }
+.dg-row.delete .dg-badge { color: var(--pink); }
+.dg-title { flex: 1; font-weight: 600; font-size: 14px; }
+.dg-meta  { font-size: 12px; color: #888; }
