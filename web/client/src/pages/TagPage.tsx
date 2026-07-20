@@ -18,6 +18,8 @@ export function TagPage() {
   const [candidates, setCandidates] = useState<Playlist[]>([])
   const [selected, setSelected] = useState(new Set<string>())
   const [loading, setLoading] = useState(true)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const [renaming, setRenaming] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -37,10 +39,20 @@ export function TagPage() {
 
   async function renameSelected() {
     const toRename = candidates.filter(p => selected.has(p.id))
-    for (const p of toRename) {
-      await api.playlists.rename(p.id, SPO + p.title, p.description)
+    setRenaming(true)
+    setRenameError(null)
+    let renamed = 0
+    try {
+      for (const p of toRename) {
+        await api.playlists.rename(p.id, SPO + p.title, p.description)
+        renamed++
+      }
+    } catch (err: unknown) {
+      setRenameError(`Tagged ${renamed}/${toRename.length} — ${(err as Error).message}`)
+    } finally {
+      setRenaming(false)
+      load()
     }
-    load()
   }
 
   const now = Date.now()
@@ -53,6 +65,8 @@ export function TagPage() {
           Playlists younger than 30 days are pre-selected <span className="tag-recommended">★ new</span>
         </p>
         {loading && <p style={{fontWeight:600}}>Loading…</p>}
+        {renaming && <p style={{fontWeight:600}}>Tagging…</p>}
+        {renameError && <p style={{color:'var(--pink)',fontWeight:700}}>{renameError}</p>}
         <div className="card" style={{padding:0,overflow:'hidden'}}>
           {candidates.map(p => {
             const isNew = now - new Date(p.publishedAt).getTime() < THIRTY_DAYS

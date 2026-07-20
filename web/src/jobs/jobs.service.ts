@@ -31,9 +31,11 @@ export class JobsService {
     const jobId = Math.random().toString(36).slice(2, 10)
     const subject = new Subject<ProgressEvent>()
     this.jobs.set(jobId, { subject })
-    this.runDeletions(token, ids, subject, jobId).catch(() => {
+    this.runDeletions(token, ids, subject, jobId).catch((err: unknown) => {
+      subject.next({ data: { done: 0, total: ids.length, error: (err as Error).message ?? 'Unexpected error' } })
+      subject.next({ data: { done: 0, total: ids.length, complete: true } })
       subject.complete()
-      this.jobs.delete(jobId)
+      setTimeout(() => this.jobs.delete(jobId), 30_000)
     })
     return jobId
   }

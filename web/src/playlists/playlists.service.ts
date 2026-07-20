@@ -26,7 +26,7 @@ export class PlaylistsService {
       const q = filters.search.toLowerCase()
       result = result.filter(p => p.title.toLowerCase().includes(q))
     }
-    if (filters.days) {
+    if (filters.days !== undefined) {
       const cutoff = Date.now() - filters.days * 86_400_000
       result = result.filter(p => new Date(p.publishedAt).getTime() > cutoff)
     }

@@ -25,7 +25,7 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
       setProgress(data)
       if (data.complete || data.error === 'quotaExceeded') {
         es.close()
-        if (data.complete) setTimeout(onDone, 1200)
+        setTimeout(onDone, 1200)
       }
     }
     es.onerror = () => { es.close(); onDone() }

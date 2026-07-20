@@ -54,7 +54,7 @@ export class YoutubeProvider implements MusicProvider {
   }
 
   async deletePlaylist(accessToken: string, id: string): Promise<void> {
-    const res = await fetch(`${BASE}/playlists?id=${id}`, {
+    const res = await fetch(`${BASE}/playlists?${new URLSearchParams({ id })}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${accessToken}` },
     })
