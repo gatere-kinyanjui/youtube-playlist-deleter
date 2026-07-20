@@ -35,11 +35,15 @@ async function parseErrorResponse(res: Response): Promise<ApiError> {
 }
 
 function throwIfQuotaOrAuth(err: ApiError): never {
-  if (err.status === 401) throw Object.assign(new Error('Unauthorized'), err)
+  const meta = { status: err.status, reason: err.reason }
+  if (err.status === 401) throw Object.assign(new Error('Unauthorized'), meta)
   if (err.status === 403 && err.reason === 'quotaExceeded') {
-    throw Object.assign(new Error('API quota exceeded for today.'), err)
+    throw Object.assign(
+      new Error('YouTube API quota exceeded for today.\nQuota resets at midnight Pacific Time.\nCheck usage: console.cloud.google.com → APIs & Services → YouTube Data API v3 → Quotas'),
+      meta,
+    )
   }
-  throw Object.assign(new Error(err.message), err)
+  throw Object.assign(new Error(err.message), meta)
 }
 
 export function parsePlaylistItem(item: {
