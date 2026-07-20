@@ -1,8 +1,10 @@
-import { Controller, Get, Query, Req } from '@nestjs/common'
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common'
 import { Request } from 'express'
+import { SessionAuthGuard } from '../common/session-auth.guard'
 import { PlaylistsService } from './playlists.service'
 
 @Controller('api/playlists')
+@UseGuards(SessionAuthGuard)
 export class PlaylistsController {
   constructor(private readonly playlistsService: PlaylistsService) {}
 
