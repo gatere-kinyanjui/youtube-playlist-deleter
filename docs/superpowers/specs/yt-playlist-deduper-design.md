@@ -9,7 +9,7 @@
 
 ## Problem
 
-After migrating 1000+ Spotify playlists to YouTube Music, duplicate playlists were created — multiple playlists with the exact same name. The user wants a local tool to identify and delete the duplicates, with full control over what gets deleted before anything happens.
+After migrating 1000+ Spotify playlists to YouTube Music, duplicate playlists were created — multiple playlists with the exact same name. I need a local tool to identify and delete the duplicates, with full control over what gets deleted before anything happens.
 
 ---
 
@@ -99,14 +99,15 @@ App start
 ```typescript
 // Ensures a valid access token is available. Runs OAuth flow if needed.
 // Returns the access token string.
-async function ensureAuth(): Promise<string>
+async function ensureAuth(): Promise<string>;
 
 // Refreshes the access token using the stored refresh token.
 // Throws if refresh fails (e.g. token revoked).
-async function refreshToken(): Promise<string>
+async function refreshToken(): Promise<string>;
 ```
 
 **OAuth details:**
+
 - Flow: Authorization Code (installed app / loopback)
 - Local redirect URI: `http://127.0.0.1:8080/oauth2callback`
 - Scope: `https://www.googleapis.com/auth/youtube`
@@ -116,16 +117,16 @@ async function refreshToken(): Promise<string>
 ### `api.ts`
 
 ```typescript
-async function listAllPlaylists(token: string): Promise<Playlist[]>
-async function deletePlaylist(token: string, playlistId: string): Promise<void>
+async function listAllPlaylists(token: string): Promise<Playlist[]>;
+async function deletePlaylist(token: string, playlistId: string): Promise<void>;
 ```
 
 ```typescript
 interface Playlist {
-  id: string
-  title: string
-  itemCount: number      // from contentDetails — fetched with part=snippet,contentDetails
-  publishedAt: string    // ISO 8601
+  id: string;
+  title: string;
+  itemCount: number; // from contentDetails — fetched with part=snippet,contentDetails
+  publishedAt: string; // ISO 8601
 }
 ```
 
@@ -135,12 +136,12 @@ All functions use native `fetch`. Pagination handled internally in `listAllPlayl
 
 ```typescript
 interface DuplicateGroup {
-  name: string
-  playlists: Playlist[]  // sorted: most tracks first
-  keepIndex: number      // index of the pre-selected keeper (default 0)
+  name: string;
+  playlists: Playlist[]; // sorted: most tracks first
+  keepIndex: number; // index of the pre-selected keeper (default 0)
 }
 
-function findDuplicates(playlists: Playlist[]): DuplicateGroup[]
+function findDuplicates(playlists: Playlist[]): DuplicateGroup[];
 ```
 
 Groups playlists by exact title. Returns only groups with 2+ playlists. Within each group, sorts by `itemCount` descending, then `publishedAt` ascending (oldest wins tie-breaks). `keepIndex` always starts at 0 (the playlist with most tracks).
@@ -148,10 +149,12 @@ Groups playlists by exact title. Returns only groups with 2+ playlists. Within e
 ### `tui.ts`
 
 ```typescript
-async function reviewGroups(groups: DuplicateGroup[]): Promise<DuplicateGroup[]>
-async function confirmDeletion(toDelete: Playlist[]): Promise<boolean>
-function showProgress(current: number, total: number): void
-function showSummary(deleted: number, groups: number): void
+async function reviewGroups(
+  groups: DuplicateGroup[],
+): Promise<DuplicateGroup[]>;
+async function confirmDeletion(toDelete: Playlist[]): Promise<boolean>;
+function showProgress(current: number, total: number): void;
+function showSummary(deleted: number, groups: number): void;
 ```
 
 Uses Node.js built-in `readline` for input. ANSI escape codes for color (green = keeper, red = to delete, bold = group header). No third-party libraries.
@@ -160,15 +163,15 @@ Uses Node.js built-in `readline` for input. ANSI escape codes for color (green =
 
 ## Error Handling
 
-| Error | Handling |
-|-------|----------|
-| `credentials.json` missing | Print step-by-step setup instructions, exit 1 |
-| OAuth flow fails / times out | Clear message, exit 1 |
-| 401 Unauthorized | Auto-refresh token; if refresh fails, delete `tokens.json` and restart auth |
-| 403 Quota exceeded | Stop deletions, print count of completed deletions, tell user to re-run tomorrow |
-| 404 Not Found (on delete) | Skip silently — playlist already deleted manually |
-| Network error | Retry up to 3× with 2s delay; bail with message after 3 failures |
-| No duplicates found | Print friendly message, exit 0 |
+| Error                        | Handling                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| `credentials.json` missing   | Print step-by-step setup instructions, exit 1                                    |
+| OAuth flow fails / times out | Clear message, exit 1                                                            |
+| 401 Unauthorized             | Auto-refresh token; if refresh fails, delete `tokens.json` and restart auth      |
+| 403 Quota exceeded           | Stop deletions, print count of completed deletions, tell user to re-run tomorrow |
+| 404 Not Found (on delete)    | Skip silently — playlist already deleted manually                                |
+| Network error                | Retry up to 3× with 2s delay; bail with message after 3 failures                 |
+| No duplicates found          | Print friendly message, exit 0                                                   |
 
 All errors go to `stderr`. Normal output goes to `stdout`.
 
@@ -189,10 +192,10 @@ All errors go to `stderr`. Normal output goes to `stdout`.
 
 YouTube Data API v3 free quota: **10,000 units/day**
 
-| Operation | Cost |
-|-----------|------|
-| List playlists (per page of 50, with contentDetails) | 1 unit |
-| Delete playlist | 50 units |
+| Operation                                            | Cost     |
+| ---------------------------------------------------- | -------- |
+| List playlists (per page of 50, with contentDetails) | 1 unit   |
+| Delete playlist                                      | 50 units |
 
 With 1,000 playlists: ~20 units to list them all. If 500 are duplicates to delete: 25,000 units — exceeds the daily limit.
 

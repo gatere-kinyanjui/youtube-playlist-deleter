@@ -1,13 +1,28 @@
 import * as fs from 'fs'
 import * as http from 'http'
+import * as net from 'net'
 import * as crypto from 'crypto'
+import * as path from 'path'
 import { TokenData, Credentials } from './types'
 
-const CREDENTIALS_PATH = 'credentials.json'
-const TOKENS_PATH = 'tokens.json'
-const REDIRECT_URI = 'http://127.0.0.1:8080/oauth2callback'
+const ROOT = path.join(__dirname, '..')
+const CREDENTIALS_PATH = path.join(ROOT, 'credentials.json')
+const TOKENS_PATH = path.join(ROOT, 'tokens.json')
 const SCOPE = 'https://www.googleapis.com/auth/youtube'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
+
+function findFreePort(start = 8080, end = 8090): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer()
+    server.listen(start, '127.0.0.1', () => {
+      server.close(() => resolve(start))
+    })
+    server.on('error', () => {
+      if (start < end) resolve(findFreePort(start + 1, end))
+      else reject(new Error(`No free port found between 8080–${end}. Free one up and retry.`))
+    })
+  })
+}
 
 function loadCredentials(): Credentials {
   if (!fs.existsSync(CREDENTIALS_PATH)) {
@@ -86,11 +101,13 @@ export async function refreshToken(): Promise<string> {
 }
 
 async function runOAuthFlow(creds: Credentials): Promise<TokenData> {
+  const port = await findFreePort()
+  const redirectUri = `http://127.0.0.1:${port}/oauth2callback`
   const state = crypto.randomBytes(16).toString('hex')
   const authUrl =
     `https://accounts.google.com/o/oauth2/v2/auth` +
     `?client_id=${encodeURIComponent(creds.client_id)}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&response_type=code` +
     `&scope=${encodeURIComponent(SCOPE)}` +
     `&access_type=offline` +
@@ -106,7 +123,7 @@ async function runOAuthFlow(creds: Credentials): Promise<TokenData> {
 
   const code = await new Promise<string>((resolve, reject) => {
     const server = http.createServer((req, res) => {
-      const url = new URL(req.url!, `http://127.0.0.1:8080`)
+      const url = new URL(req.url!, `http://127.0.0.1:${port}`)
       const returnedState = url.searchParams.get('state')
       const authCode = url.searchParams.get('code')
       const error = url.searchParams.get('error')
@@ -124,7 +141,7 @@ async function runOAuthFlow(creds: Credentials): Promise<TokenData> {
       server.close()
       resolve(authCode)
     })
-    server.listen(8080, '127.0.0.1')
+    server.listen(port, '127.0.0.1')
     server.on('error', reject)
     setTimeout(() => {
       server.close()
@@ -136,7 +153,7 @@ async function runOAuthFlow(creds: Credentials): Promise<TokenData> {
     client_id: creds.client_id,
     client_secret: creds.client_secret,
     code,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: redirectUri,
     grant_type: 'authorization_code',
   })
 

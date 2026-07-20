@@ -71,12 +71,12 @@ async function runDeletions(
 
 // ─── Mode: deduplicate ────────────────────────────────────────────────────────
 
-async function runDeduplicate(token: string, playlists: Playlist[]): Promise<void> {
+async function runDeduplicate(token: string, playlists: Playlist[]): Promise<string> {
   const groups = findDuplicates(playlists)
 
   if (groups.length === 0) {
     console.log('\n  No duplicate playlists found.\n')
-    return
+    return token
   }
 
   console.log(`\n  Found ${groups.length} duplicate group${groups.length !== 1 ? 's' : ''}.\n`)
@@ -86,31 +86,32 @@ async function runDeduplicate(token: string, playlists: Playlist[]): Promise<voi
 
   if (toDelete.length === 0) {
     console.log('\n  No playlists marked for deletion.\n')
-    return
+    return token
   }
 
   const confirmed = await confirmDeletion(toDelete)
-  if (!confirmed) { console.log('\n  Cancelled.\n'); return }
+  if (!confirmed) { console.log('\n  Cancelled.\n'); return token }
 
   console.log()
-  const { deleted, deletedIds } = await runDeletions(token, toDelete)
+  const { deleted, deletedIds, token: t } = await runDeletions(token, toDelete)
 
   const cleanedGroups = reviewed.filter(g =>
     g.playlists.every((p, i) => i === g.keepIndex || deletedIds.has(p.id))
   ).length
 
   showSummary(deleted, `playlist${deleted !== 1 ? 's' : ''} deleted across ${cleanedGroups} group${cleanedGroups !== 1 ? 's' : ''}`)
+  return t
 }
 
 // ─── Mode: tag with [SPO] ────────────────────────────────────────────────────
 
-async function runTag(token: string, playlists: Playlist[]): Promise<void> {
+async function runTag(token: string, playlists: Playlist[]): Promise<string> {
   const now = Date.now()
   const untagged = playlists.filter(p => !p.title.startsWith(SPO_PREFIX))
 
   if (untagged.length === 0) {
     console.log('\n  All playlists already have the [SPO] prefix.\n')
-    return
+    return token
   }
 
   const renames: PlaylistRename[] = untagged.map(p => ({
@@ -125,11 +126,11 @@ async function runTag(token: string, playlists: Playlist[]): Promise<void> {
 
   if (toRename.length === 0) {
     console.log('\n  No playlists selected for renaming.\n')
-    return
+    return token
   }
 
   const confirmed = await confirmRenames(reviewed)
-  if (!confirmed) { console.log('\n  Cancelled.\n'); return }
+  if (!confirmed) { console.log('\n  Cancelled.\n'); return token }
 
   console.log()
   let renamedCount = 0
@@ -150,23 +151,30 @@ async function runTag(token: string, playlists: Playlist[]): Promise<void> {
   }
 
   showSummary(renamedCount, `playlist${renamedCount !== 1 ? 's' : ''} tagged with ${SPO_PREFIX}`)
+  return token
 }
 
 // ─── Mode: search and delete ─────────────────────────────────────────────────
 
-async function runSearch(token: string, playlists: Playlist[]): Promise<void> {
+async function runSearch(token: string, playlists: Playlist[]): Promise<string> {
   const selected = await searchAndSelect(playlists)
-  if (selected.length === 0) return
+  if (selected.length === 0) return token
 
   const confirmed = await confirmDeletion(selected)
-  if (!confirmed) { console.log('\n  Cancelled.\n'); return }
+  if (!confirmed) { console.log('\n  Cancelled.\n'); return token }
 
   console.log()
-  const { deleted } = await runDeletions(token, selected)
+  const { deleted, token: t } = await runDeletions(token, selected)
   showSummary(deleted, `playlist${deleted !== 1 ? 's' : ''} deleted`)
+  return t
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
+
+process.on('SIGINT', () => {
+  process.stdout.write('\n\n  Interrupted.\n\n')
+  process.exit(0)
+})
 
 async function run(): Promise<void> {
   let token = await ensureAuth()
@@ -177,9 +185,9 @@ async function run(): Promise<void> {
     if (choice === 'exit') break
 
     try {
-      if (choice === 'deduplicate') await runDeduplicate(token, playlists)
-      if (choice === 'tag')         await runTag(token, playlists)
-      if (choice === 'search')      await runSearch(token, playlists)
+      if (choice === 'deduplicate') token = await runDeduplicate(token, playlists)
+      if (choice === 'tag')         token = await runTag(token, playlists)
+      if (choice === 'search')      token = await runSearch(token, playlists)
     } catch (err: unknown) {
       process.stderr.write(`\nError: ${(err as Error).message}\n`)
     }

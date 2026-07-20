@@ -3,3 +3,7 @@ dist/
 credentials.json
 tokens.json
 *.js.map
+.env
+.env.local
+.env.production
+!.env.example
