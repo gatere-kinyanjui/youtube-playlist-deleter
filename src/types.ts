@@ -30,4 +30,4 @@ export interface Credentials {
   client_secret: string
 }
 
-export type MenuChoice = 'deduplicate' | 'tag' | 'search' | 'exit'
+export type MenuChoice = 'deduplicate' | 'tag' | 'search' | 'delete-recent' | 'exit'

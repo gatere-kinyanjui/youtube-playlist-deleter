@@ -27,12 +27,14 @@ export async function showMainMenu(): Promise<MenuChoice> {
     console.log(`  ${cyan('1')}  Find and delete duplicate playlists`)
     console.log(`  ${cyan('2')}  Tag Spotify-imported playlists with [SPO] prefix`)
     console.log(`  ${cyan('3')}  Search and delete playlists`)
-    console.log(`  ${cyan('4')}  Exit\n`)
+    console.log(`  ${cyan('4')}  Delete recent playlists`)
+    console.log(`  ${cyan('5')}  Exit\n`)
     const input = (await prompt(rl, '> ')).trim()
     if (input === '1') { rl.close(); return 'deduplicate' }
     if (input === '2') { rl.close(); return 'tag' }
     if (input === '3') { rl.close(); return 'search' }
-    if (input === '4' || input === 'q') { rl.close(); return 'exit' }
+    if (input === '4') { rl.close(); return 'delete-recent' }
+    if (input === '5' || input === 'q') { rl.close(); return 'exit' }
   }
 }
 
