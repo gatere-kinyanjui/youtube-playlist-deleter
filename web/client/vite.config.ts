@@ -7,8 +7,8 @@ export default defineConfig({
     port: 6173,
     host: '0.0.0.0',
     proxy: {
-      '/api': { target: 'http://localhost:6000', changeOrigin: true },
-      '/auth': { target: 'http://localhost:6000', changeOrigin: true },
+      '/api': { target: 'http://localhost:3001', changeOrigin: true },
+      '/auth': { target: 'http://localhost:3001', changeOrigin: true },
     },
   },
   build: { outDir: 'dist' },

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './ProgressDrawer.css'
 
 interface ProgressEvent {
@@ -12,24 +12,27 @@ interface Props {
 
 export function ProgressDrawer({ jobId, onDone }: Props) {
   const [progress, setProgress] = useState<ProgressEvent | null>(null)
-  const esRef = useRef<EventSource | null>(null)
 
   useEffect(() => {
     if (!jobId) { setProgress(null); return }
 
+    let timerId: ReturnType<typeof setTimeout> | null = null
     const es = new EventSource(`/api/jobs/${jobId}/progress`, { withCredentials: true })
-    esRef.current = es
 
     es.onmessage = (e: MessageEvent<string>) => {
       const data = JSON.parse(e.data) as ProgressEvent
       setProgress(data)
-      if (data.complete || data.error === 'quotaExceeded') {
+      if (data.complete) {
         es.close()
-        setTimeout(onDone, 1200)
+        timerId = setTimeout(onDone, 1500)
       }
     }
     es.onerror = () => { es.close(); onDone() }
-    return () => { es.close() }
+
+    return () => {
+      es.close()
+      if (timerId !== null) clearTimeout(timerId)
+    }
   }, [jobId, onDone])
 
   const pct = progress ? Math.round((progress.done / progress.total) * 100) : 0
@@ -37,10 +40,9 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
 
   return (
     <div className={`progress-drawer ${visible ? 'visible' : ''}`}>
-      {progress?.error === 'quotaExceeded' ? (
+      {progress?.error ? (
         <div className="progress-quota-msg">
-          ⚠ Quota exceeded — deleted {progress.done}/{progress.total}.
-          Quota resets at midnight Pacific Time.
+          ⚠ {progress.error} ({progress.done}/{progress.total} deleted)
         </div>
       ) : (
         <>

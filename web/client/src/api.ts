@@ -10,7 +10,14 @@ export interface DuplicateGroup {
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: 'include', ...init })
   if (res.status === 401) { window.location.href = '/login'; throw new Error('unauthenticated') }
-  if (!res.ok) throw new Error(`API ${res.status}`)
+  if (!res.ok) {
+    let message = `API error ${res.status}`
+    try {
+      const body = await res.json() as { message?: string }
+      if (body.message) message = body.message
+    } catch { /* ignore parse errors */ }
+    throw new Error(message)
+  }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }

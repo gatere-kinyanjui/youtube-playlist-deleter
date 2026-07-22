@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { api, Playlist } from '../api'
 import { BulkActionBar } from '../components/BulkActionBar'
 import { PlaylistCard } from '../components/PlaylistCard'
@@ -26,16 +26,21 @@ export function RecentPage() {
   const [jobId, setJobId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [searched, setSearched] = useState(false)
+  const onDeleteDone = useCallback(() => { setJobId(null); setPlaylists([]); setSelected(new Set()); setSearched(false) }, [])
 
   async function search() {
     const ms = parseMs(rangeInput)
     if (!ms) { setError('Try: 6 hours, 3 days, 2 weeks, 1 month'); return }
     setError('')
     const days = ms / 86_400_000
-    const list = await api.playlists.list({ days })
-    setPlaylists(list)
-    setSelected(new Set(list.map(p => p.id)))
-    setSearched(true)
+    try {
+      const list = await api.playlists.list({ days })
+      setPlaylists(list)
+      setSelected(new Set(list.map(p => p.id)))
+      setSearched(true)
+    } catch (err: unknown) {
+      setError((err as Error).message)
+    }
   }
 
   function toggle(id: string) {
@@ -43,8 +48,16 @@ export function RecentPage() {
   }
 
   async function deleteSelected() {
-    const { jobId: jid } = await api.jobs.start([...selected])
-    setJobId(jid)
+    const ids = [...selected]
+    setSelected(new Set())
+    setError('')
+    try {
+      const { jobId: jid } = await api.jobs.start(ids)
+      setJobId(jid)
+    } catch (err: unknown) {
+      setSelected(new Set(ids))
+      setError((err as Error).message)
+    }
   }
 
   return (
@@ -84,8 +97,14 @@ export function RecentPage() {
           </div>
         )}
       </div>
-      <BulkActionBar count={selected.size} onDelete={deleteSelected} onClear={() => setSelected(new Set())} />
-      <ProgressDrawer jobId={jobId} onDone={() => { setJobId(null); setPlaylists([]); setSelected(new Set()); setSearched(false) }} />
+      <BulkActionBar
+        count={selected.size}
+        total={playlists.length}
+        onDelete={deleteSelected}
+        onSelectAll={() => setSelected(new Set(playlists.map(p => p.id)))}
+        onClear={() => setSelected(new Set())}
+      />
+      <ProgressDrawer jobId={jobId} onDone={onDeleteDone} />
     </>
   )
 }

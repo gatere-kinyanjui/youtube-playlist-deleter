@@ -6,29 +6,41 @@ const SPO = '[SPO] '
 const THIRTY_DAYS = 30 * 86_400_000
 
 // Rename-specific bulk bar (no delete semantics needed here)
-const RenameBulkBar = ({ count, onRename, onClear }: { count: number; onRename: () => void; onClear: () => void }) => (
-  <div className={`bulk-bar ${count > 0 ? 'visible' : ''}`}>
-    <span>{count} selected</span>
-    <button className="btn btn-secondary" onClick={onRename}>Add [SPO] to {count}</button>
-    <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={onClear}>Clear</button>
-  </div>
-)
+const RenameBulkBar = ({ count, total, onRename, onSelectAll, onClear }: { count: number; total: number; onRename: () => void; onSelectAll: () => void; onClear: () => void }) => {
+  const allSelected = count === total && total > 0
+  return (
+    <div className={`bulk-bar ${count > 0 ? 'visible' : ''}`}>
+      <span>{count} selected</span>
+      <button className="btn btn-secondary" onClick={onRename}>Add [SPO] to {count}</button>
+      <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={allSelected ? onClear : onSelectAll}>
+        {allSelected ? 'Deselect all' : `Select all ${total}`}
+      </button>
+      <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={onClear}>Clear</button>
+    </div>
+  )
+}
 
 export function TagPage() {
   const [candidates, setCandidates] = useState<Playlist[]>([])
   const [selected, setSelected] = useState(new Set<string>())
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [renameError, setRenameError] = useState<string | null>(null)
   const [renaming, setRenaming] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const list = await api.playlists.tagCandidates()
-    setCandidates(list)
-    // Pre-select playlists < 30 days old (matching CLI recommendation logic)
-    const now = Date.now()
-    setSelected(new Set(list.filter(p => now - new Date(p.publishedAt).getTime() < THIRTY_DAYS).map(p => p.id)))
-    setLoading(false)
+    setLoadError(null)
+    try {
+      const list = await api.playlists.tagCandidates()
+      setCandidates(list)
+      const now = Date.now()
+      setSelected(new Set(list.filter(p => now - new Date(p.publishedAt).getTime() < THIRTY_DAYS).map(p => p.id)))
+    } catch (err: unknown) {
+      setLoadError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -65,6 +77,7 @@ export function TagPage() {
           Playlists younger than 30 days are pre-selected <span className="tag-recommended">★ new</span>
         </p>
         {loading && <p style={{fontWeight:600}}>Loading…</p>}
+        {loadError && <p style={{color:'var(--pink)',fontWeight:700}}>{loadError}</p>}
         {renaming && <p style={{fontWeight:600}}>Tagging…</p>}
         {renameError && <p style={{color:'var(--pink)',fontWeight:700}}>{renameError}</p>}
         <div className="card" style={{padding:0,overflow:'hidden'}}>
@@ -79,7 +92,13 @@ export function TagPage() {
           })}
         </div>
       </div>
-      <RenameBulkBar count={selected.size} onRename={renameSelected} onClear={() => setSelected(new Set())} />
+      <RenameBulkBar
+        count={selected.size}
+        total={candidates.length}
+        onRename={renameSelected}
+        onSelectAll={() => setSelected(new Set(candidates.map(p => p.id)))}
+        onClear={() => setSelected(new Set())}
+      />
     </>
   )
 }

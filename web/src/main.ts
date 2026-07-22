@@ -10,22 +10,28 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule)
 
+  const isProd = process.env.NODE_ENV === 'production'
+  if (isProd) app.getHttpAdapter().getInstance().set('trust proxy', 1)
+
   app.use(
     session({
-      secret: process.env.SESSION_SECRET ?? 'dev-secret',
+      secret: process.env.SESSION_SECRET!,
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 },
+      cookie: {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: isProd,
+        sameSite: isProd ? 'lax' : false,
+      },
     }),
   )
 
-  // Only enable CORS in development
-  if (process.env.NODE_ENV !== 'production') {
+  if (!isProd) {
     const corsOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:6173'
     app.enableCors({ origin: corsOrigin, credentials: true })
   }
 
-  const port = process.env.PORT ?? 6000
+  const port = process.env.PORT ?? 3001
   await app.listen(port, '0.0.0.0')
   console.log(`Server running on http://0.0.0.0:${port}`)
 }

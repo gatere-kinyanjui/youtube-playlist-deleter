@@ -7,12 +7,20 @@ export function DuplicatesPage() {
   const [groups, setGroups] = useState<(DuplicateGroup & { keepIndex: number })[]>([])
   const [jobId, setJobId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const g = await api.playlists.duplicates()
-    setGroups(g.map(x => ({ ...x })))
-    setLoading(false)
+    setLoadError(null)
+    try {
+      const g = await api.playlists.duplicates()
+      setGroups(g.map(x => ({ ...x })))
+    } catch (err: unknown) {
+      setLoadError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -26,11 +34,17 @@ export function DuplicatesPage() {
   async function deleteAll() {
     const ids = groups.flatMap(g => g.playlists.filter((_, i) => i !== g.keepIndex).map(p => p.id))
     if (ids.length === 0) return
-    const { jobId: jid } = await api.jobs.start(ids)
-    setJobId(jid)
+    setDeleteError(null)
+    try {
+      const { jobId: jid } = await api.jobs.start(ids)
+      setJobId(jid)
+    } catch (err: unknown) {
+      setDeleteError((err as Error).message)
+    }
   }
 
   const toDelete = groups.reduce((n, g) => n + g.playlists.length - 1, 0)
+  const onDone = useCallback(() => { setJobId(null); load() }, [load])
 
   return (
     <>
@@ -44,6 +58,8 @@ export function DuplicatesPage() {
           )}
         </div>
         {loading && <p style={{fontWeight:600}}>Scanning…</p>}
+        {loadError && <p style={{color:'var(--pink)',fontWeight:700}}>{loadError}</p>}
+        {deleteError && <p style={{color:'var(--pink)',fontWeight:700}}>{deleteError}</p>}
         {!loading && groups.length === 0 && (
           <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
             No duplicates found.
@@ -53,7 +69,7 @@ export function DuplicatesPage() {
           <DuplicateGroupCard key={g.name} group={g} keepIndex={g.keepIndex} onFlipKeep={() => flipKeep(i)} />
         ))}
       </div>
-      <ProgressDrawer jobId={jobId} onDone={() => { setJobId(null); load() }} />
+      <ProgressDrawer jobId={jobId} onDone={onDone} />
     </>
   )
 }

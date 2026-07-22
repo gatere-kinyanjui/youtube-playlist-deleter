@@ -13,17 +13,25 @@ export function PlaylistsPage() {
   const [selected, setSelected] = useState(new Set<string>())
   const [jobId, setJobId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef(1)
 
   const load = useCallback(async (params?: { search?: string; days?: number }) => {
     setLoading(true)
+    setLoadError(null)
     pageRef.current = 1
-    const playlists = await api.playlists.list(params)
-    setAll(playlists)
-    setVisible(playlists.slice(0, PAGE_SIZE))
-    setSelected(new Set())
-    setLoading(false)
+    try {
+      const playlists = await api.playlists.list(params)
+      setAll(playlists)
+      setVisible(playlists.slice(0, PAGE_SIZE))
+      setSelected(new Set())
+    } catch (err: unknown) {
+      setLoadError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -52,14 +60,18 @@ export function PlaylistsPage() {
 
   async function deleteSelected() {
     const ids = [...selected]
-    const { jobId: jid } = await api.jobs.start(ids)
-    setJobId(jid)
+    setSelected(new Set())
+    setDeleteError(null)
+    try {
+      const { jobId: jid } = await api.jobs.start(ids)
+      setJobId(jid)
+    } catch {
+      setDeleteError('Failed to start delete job — check the server.')
+      setSelected(new Set(ids))
+    }
   }
 
-  function onDone() {
-    setJobId(null)
-    load()
-  }
+  const onDone = useCallback(() => { setJobId(null); load() }, [load])
 
   return (
     <>
@@ -67,6 +79,8 @@ export function PlaylistsPage() {
         <h1 className="page-title">All Playlists</h1>
         <FilterBar onFilter={load} />
         {loading && <p style={{fontWeight:600}}>Loading…</p>}
+        {loadError && <p style={{color:'var(--pink)',fontWeight:700}}>{loadError}</p>}
+        {deleteError && <p style={{color:'var(--pink)',fontWeight:700}}>{deleteError}</p>}
         <div className="card" style={{padding:0, overflow:'hidden'}}>
           {visible.map(p => (
             <PlaylistCard
@@ -86,7 +100,13 @@ export function PlaylistsPage() {
           )}
         </div>
       </div>
-      <BulkActionBar count={selected.size} onDelete={deleteSelected} onClear={() => setSelected(new Set())} />
+      <BulkActionBar
+        count={selected.size}
+        total={visible.length}
+        onDelete={deleteSelected}
+        onSelectAll={() => setSelected(new Set(visible.map(p => p.id)))}
+        onClear={() => setSelected(new Set())}
+      />
       <ProgressDrawer jobId={jobId} onDone={onDone} />
     </>
   )

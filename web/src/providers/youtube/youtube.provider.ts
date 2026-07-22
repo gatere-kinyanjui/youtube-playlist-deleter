@@ -1,13 +1,31 @@
-import { Injectable } from '@nestjs/common'
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { MusicProvider, Playlist } from '../music-provider.interface'
 
 const BASE = 'https://www.googleapis.com/youtube/v3'
+const CACHE_TTL = 5 * 60 * 1000
+
+function youtubeError(status: number, reason: string | undefined): HttpException {
+  if (reason === 'quotaExceeded') {
+    return new HttpException(
+      'YouTube API quota exceeded — resets at midnight Pacific Time.',
+      HttpStatus.TOO_MANY_REQUESTS,
+    )
+  }
+  if (status === 401 || status === 403) {
+    return new HttpException('YouTube access denied — try signing out and back in.', HttpStatus.UNAUTHORIZED)
+  }
+  return new HttpException(`YouTube API error ${status} (${reason ?? 'unknown'})`, HttpStatus.BAD_GATEWAY)
+}
 
 @Injectable()
 export class YoutubeProvider implements MusicProvider {
   readonly name = 'youtube'
+  private readonly cache = new Map<string, { playlists: Playlist[]; expiresAt: number }>()
 
   async listPlaylists(accessToken: string): Promise<Playlist[]> {
+    const cached = this.cache.get(accessToken)
+    if (cached && cached.expiresAt > Date.now()) return cached.playlists
+
     const playlists: Playlist[] = []
     let pageToken: string | undefined
 
@@ -23,11 +41,7 @@ export class YoutubeProvider implements MusicProvider {
       })
       if (!res.ok) {
         const body = await res.json() as { error?: { errors?: { reason?: string }[] } }
-        const reason = body.error?.errors?.[0]?.reason
-        const err = new Error(`YouTube API ${res.status} (${reason ?? 'unknown'})`) as Error & { status: number; reason?: string }
-        err.status = res.status
-        err.reason = reason
-        throw err
+        throw youtubeError(res.status, body.error?.errors?.[0]?.reason)
       }
       const data = await res.json() as {
         items?: {
@@ -50,6 +64,12 @@ export class YoutubeProvider implements MusicProvider {
       pageToken = data.nextPageToken
     } while (pageToken)
 
+    this.cache.set(accessToken, { playlists, expiresAt: Date.now() + CACHE_TTL })
+    // Evict expired entries so the cache doesn't grow with every token rotation
+    const now = Date.now()
+    for (const [key, entry] of this.cache) {
+      if (entry.expiresAt <= now) this.cache.delete(key)
+    }
     return playlists
   }
 
@@ -58,13 +78,9 @@ export class YoutubeProvider implements MusicProvider {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (res.status === 204 || res.status === 200 || res.status === 404) return
+    if (res.status === 204 || res.status === 200 || res.status === 404) { this.cache.delete(accessToken); return }
     const body = await res.json() as { error?: { errors?: { reason?: string }[] } }
-    const reason = body.error?.errors?.[0]?.reason
-    const err = new Error(`YouTube API ${res.status} (${reason ?? 'unknown'})`) as Error & { status: number; reason?: string }
-    err.status = res.status
-    err.reason = reason
-    throw err
+    throw youtubeError(res.status, body.error?.errors?.[0]?.reason)
   }
 
   async renamePlaylist(accessToken: string, id: string, title: string, description: string): Promise<void> {
@@ -76,12 +92,8 @@ export class YoutubeProvider implements MusicProvider {
       },
       body: JSON.stringify({ id, snippet: { title, description } }),
     })
-    if (res.ok) return
+    if (res.ok) { this.cache.delete(accessToken); return }
     const body = await res.json() as { error?: { errors?: { reason?: string }[] } }
-    const reason = body.error?.errors?.[0]?.reason
-    const err = new Error(`YouTube API ${res.status} (${reason ?? 'unknown'})`) as Error & { status: number; reason?: string }
-    err.status = res.status
-    err.reason = reason
-    throw err
+    throw youtubeError(res.status, body.error?.errors?.[0]?.reason)
   }
 }

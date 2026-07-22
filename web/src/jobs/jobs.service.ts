@@ -1,5 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common'
-import { Observable, Subject } from 'rxjs'
+import { HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { Observable, Subject, finalize } from 'rxjs'
 import { AuthService } from '../auth/auth.service'
 import { TokenData } from '../auth/token-data.interface'
 import { MusicProvider, MUSIC_PROVIDER } from '../providers/music-provider.interface'
@@ -16,6 +16,7 @@ interface ProgressEvent {
 
 interface JobState {
   subject: Subject<ProgressEvent>
+  aborted: boolean
 }
 
 @Injectable()
@@ -30,8 +31,9 @@ export class JobsService {
   startDeleteJob(token: TokenData, ids: string[]): string {
     const jobId = Math.random().toString(36).slice(2, 10)
     const subject = new Subject<ProgressEvent>()
-    this.jobs.set(jobId, { subject })
-    this.runDeletions(token, ids, subject, jobId).catch((err: unknown) => {
+    const job: JobState = { subject, aborted: false }
+    this.jobs.set(jobId, job)
+    this.runDeletions(token, ids, subject, jobId, job).catch((err: unknown) => {
       subject.next({ data: { done: 0, total: ids.length, error: (err as Error).message ?? 'Unexpected error' } })
       subject.next({ data: { done: 0, total: ids.length, complete: true } })
       subject.complete()
@@ -43,7 +45,9 @@ export class JobsService {
   getProgress(jobId: string): Observable<ProgressEvent> {
     const job = this.jobs.get(jobId)
     if (!job) throw new NotFoundException(`Job ${jobId} not found`)
-    return job.subject.asObservable()
+    // finalize fires on both normal completion and SSE client disconnect;
+    // setting aborted stops the deletion loop when the client navigates away
+    return job.subject.asObservable().pipe(finalize(() => { job.aborted = true }))
   }
 
   private async runDeletions(
@@ -51,28 +55,32 @@ export class JobsService {
     ids: string[],
     subject: Subject<ProgressEvent>,
     jobId: string,
+    job: JobState,
   ): Promise<void> {
     const total = ids.length
     let done = 0
+    let failed = 0
 
     for (const id of ids) {
+      if (job.aborted) break
       try {
         const accessToken = await this.authService.getValidAccessToken(token)
         await this.provider.deletePlaylist(accessToken, id)
         done++
         subject.next({ data: { done, total, current: id } })
       } catch (err: unknown) {
-        const e = err as { reason?: string }
-        if (e.reason === 'quotaExceeded') {
-          subject.next({ data: { done, total, error: 'quotaExceeded' } })
+        if (err instanceof HttpException && err.getStatus() === 429) {
+          subject.next({ data: { done, total, error: err.message } })
           break
         }
-        // non-quota errors: log and continue
-        subject.next({ data: { done, total, current: id, error: (err as Error).message } })
+        failed++
       }
     }
 
-    subject.next({ data: { done, total, complete: true } })
+    const completionError = failed > 0
+      ? `${failed} playlist${failed === 1 ? '' : 's'} could not be deleted`
+      : undefined
+    subject.next({ data: { done, total, complete: true, error: completionError } })
     subject.complete()
     setTimeout(() => this.jobs.delete(jobId), 30_000)
   }
