@@ -1,24 +1,71 @@
 .nav {
-  position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 16px;
   padding: 10px 16px; background: var(--surface);
   border-bottom: var(--border); box-shadow: 0 2px 0 var(--ink);
 }
 .nav-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .nav-title { font-family: var(--font-display); font-weight: 800; font-size: 18px; }
-.nav-links { display: flex; gap: 4px; flex: 1; }
+
+/* ── Desktop links ────────────────────────────────────────────────────── */
+.nav-links-desktop { display: flex; align-items: center; gap: 4px; flex: 1; }
+
+/* ── Shared link style ─────────────────────────────────────────────────── */
 .nav-link {
   padding: 6px 14px; font-weight: 600; font-size: 14px;
   border: 2px solid transparent; min-height: 40px;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; white-space: nowrap;
 }
 .nav-link:hover { border-color: var(--ink); }
 .nav-link.active { border-color: var(--ink); background: var(--yellow); }
 
-@media (max-width: 599px) {
-  .nav { gap: 8px 4px; padding: 8px 12px; }
-  .nav-brand { flex: 1; }
+/* ── Logout button ─────────────────────────────────────────────────────── */
+.nav-logout { font-size: 13px; white-space: nowrap; }
+
+/* ── Hamburger (hidden on desktop) ─────────────────────────────────────── */
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: var(--border); padding: 12px; margin-left: auto;
+  touch-action: manipulation;
+}
+.hamburger-line {
+  display: block; width: 22px; height: 3px;
+  background: var(--ink); transition: transform 200ms, opacity 200ms;
+}
+.hamburger--open .hamburger-line:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.hamburger--open .hamburger-line:nth-child(2) { opacity: 0; }
+.hamburger--open .hamburger-line:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+/* ── Mobile drawer ─────────────────────────────────────────────────────── */
+.menu-overlay {
+  display: none; position: fixed; inset: 0; z-index: 60;
+  background: rgba(0,0,0,0.35);
+}
+.menu-drawer {
+  display: none; position: fixed; top: 64px; left: 0; right: 0; z-index: 70;
+  flex-direction: column; gap: 4px;
+  background: var(--surface); border-bottom: var(--border);
+  box-shadow: var(--shadow); padding: 12px 16px 16px;
+  transform: translateY(-110%); transition: transform 200ms ease;
+}
+.menu-drawer .nav-link { width: 100%; font-size: 16px; padding: 12px 14px; justify-content: center; }
+.menu-drawer--open { transform: translateY(0); }
+
+/* ── Desktop breakpoint ────────────────────────────────────────────────── */
+@media (min-width: 769px) {
+  .menu-overlay, .menu-drawer { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  .nav-links-desktop { display: none; }
+  .hamburger { display: flex; }
+  .menu-overlay { display: block; }
+  .menu-drawer { display: flex; }
+}
+
+/* ── Tight phones ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nav { padding: 8px 12px; }
   .nav-title { font-size: 15px; }
-  .nav-links { order: 1; width: 100%; gap: 2px; }
-  .nav-link { flex: 1; justify-content: center; font-size: 13px; padding: 10px 4px; }
+  .menu-drawer { top: 58px; padding: 10px 12px 12px; }
 }

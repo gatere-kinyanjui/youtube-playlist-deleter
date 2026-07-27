@@ -4,15 +4,16 @@ import './PlaylistCard.css'
 interface Props {
   playlist: Playlist
   selected: boolean
+  removing?: boolean
   onToggle: () => void
 }
 
-export function PlaylistCard({ playlist, selected, onToggle }: Props) {
+export function PlaylistCard({ playlist, selected, removing, onToggle }: Props) {
   const date = playlist.publishedAt.slice(0, 10)
   const tracks = `${playlist.itemCount} track${playlist.itemCount !== 1 ? 's' : ''}`
 
   return (
-    <div className={`playlist-row ${selected ? 'selected' : ''}`}>
+    <div className={`playlist-row ${selected ? 'selected' : ''} ${removing ? 'removing' : ''}`}>
       <div
         className={`checkbox ${selected ? 'checked' : ''}`}
         onClick={onToggle}

@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage'
 import { PlaylistsPage } from './pages/PlaylistsPage'
 import { RecentPage } from './pages/RecentPage'
 import { TagPage } from './pages/TagPage'
+import { ToastProvider } from './components/Toast'
 import './styles/reset.css'
 import './styles/tokens.css'
 import './styles/neo-brutal.css'
@@ -27,10 +28,12 @@ function Layout() {
 export function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="*"      element={<Layout />} />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="*"      element={<Layout />} />
+        </Routes>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

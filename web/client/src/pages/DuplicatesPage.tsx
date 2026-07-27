@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, DuplicateGroup } from '../api'
 import { DuplicateGroupCard } from '../components/DuplicateGroup'
 import { ProgressDrawer } from '../components/ProgressDrawer'
+import { Spinner } from '../components/Spinner'
+import { useToast } from '../components/Toast'
 
 export function DuplicatesPage() {
   const [groups, setGroups] = useState<(DuplicateGroup & { keepIndex: number })[]>([])
@@ -9,6 +11,7 @@ export function DuplicatesPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { addToast } = useToast()
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -44,7 +47,17 @@ export function DuplicatesPage() {
   }
 
   const toDelete = groups.reduce((n, g) => n + g.playlists.length - 1, 0)
-  const onDone = useCallback(() => { setJobId(null); load() }, [load])
+  const onDone = useCallback((status: { done: number; failed?: number; error?: string; quotaExceeded?: boolean }) => {
+    setJobId(null)
+    load()
+    if (status.error && status.quotaExceeded) {
+      addToast('warning', `Quota exceeded — ${status.done} duplicate${status.done !== 1 ? 's' : ''} deleted`)
+    } else if (status.error) {
+      addToast('error', status.error)
+    } else {
+      addToast('success', `Deleted ${status.done} duplicate${status.done !== 1 ? 's' : ''}`)
+    }
+  }, [load, addToast])
 
   return (
     <>
@@ -57,12 +70,13 @@ export function DuplicatesPage() {
             </button>
           )}
         </div>
-        {loading && <p style={{fontWeight:600}}>Scanning…</p>}
-        {loadError && <p style={{color:'var(--pink)',fontWeight:700}}>{loadError}</p>}
-        {deleteError && <p style={{color:'var(--pink)',fontWeight:700}}>{deleteError}</p>}
+        {loading && <Spinner label="Scanning for duplicates…" />}
+        {loadError && <p className="msg-error">{loadError}</p>}
+        {deleteError && <p className="msg-error">{deleteError}</p>}
         {!loading && groups.length === 0 && (
           <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
-            No duplicates found.
+            <p style={{fontWeight:700,fontSize:18,marginBottom:4}}>No duplicates found</p>
+            <p style={{fontSize:13}}>Your playlists are all unique!</p>
           </div>
         )}
         {groups.map((g, i) => (

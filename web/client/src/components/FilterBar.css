@@ -1,9 +1,10 @@
 .filter-bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-.filter-search { max-width: 400px; }
+.filter-search-wrap { display: flex; align-items: center; gap: 10px; max-width: 400px; }
+.filter-search { flex: 1; }
 .filter-days { display: flex; flex-wrap: wrap; gap: 8px; }
 
 @media (max-width: 599px) {
-  .filter-search { max-width: 100%; }
+  .filter-search-wrap { max-width: 100%; }
   .filter-days { gap: 6px; }
   .filter-days .btn { font-size: 13px; padding: 8px 12px; }
 }

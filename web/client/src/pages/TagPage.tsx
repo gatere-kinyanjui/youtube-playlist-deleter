@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, Playlist } from '../api'
 import { PlaylistCard } from '../components/PlaylistCard'
+import { Spinner } from '../components/Spinner'
 
 const SPO = '[SPO] '
 const THIRTY_DAYS = 30 * 86_400_000
 
-// Rename-specific bulk bar (no delete semantics needed here)
-const RenameBulkBar = ({ count, total, onRename, onSelectAll, onClear }: { count: number; total: number; onRename: () => void; onSelectAll: () => void; onClear: () => void }) => {
+const RenameBulkBar = ({ count, total, onRename, onSelectAll, onClear, renaming }: {
+  count: number; total: number; onRename: () => void
+  onSelectAll: () => void; onClear: () => void; renaming: boolean
+}) => {
   const allSelected = count === total && total > 0
   return (
     <div className={`bulk-bar ${count > 0 ? 'visible' : ''}`}>
       <span>{count} selected</span>
-      <button className="btn btn-secondary" onClick={onRename}>Add [SPO] to {count}</button>
+      <button className="btn btn-secondary" onClick={onRename} disabled={renaming}>
+        {renaming ? 'Tagging…' : `Add [SPO] to ${count}`}
+      </button>
       <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={allSelected ? onClear : onSelectAll}>
         {allSelected ? 'Deselect all' : `Select all ${total}`}
       </button>
@@ -76,21 +81,28 @@ export function TagPage() {
         <p style={{marginBottom:16,color:'#555',fontWeight:600}}>
           Playlists younger than 30 days are pre-selected <span className="tag-recommended">★ new</span>
         </p>
-        {loading && <p style={{fontWeight:600}}>Loading…</p>}
-        {loadError && <p style={{color:'var(--pink)',fontWeight:700}}>{loadError}</p>}
-        {renaming && <p style={{fontWeight:600}}>Tagging…</p>}
-        {renameError && <p style={{color:'var(--pink)',fontWeight:700}}>{renameError}</p>}
-        <div className="card" style={{padding:0,overflow:'hidden'}}>
-          {candidates.map(p => {
-            const isNew = now - new Date(p.publishedAt).getTime() < THIRTY_DAYS
-            return (
-              <div key={p.id} style={{position:'relative'}}>
-                <PlaylistCard playlist={p} selected={selected.has(p.id)} onToggle={() => toggle(p.id)} />
-                {isNew && <span className="tag-recommended" style={{position:'absolute',top:14,right:16}}>★ new</span>}
-              </div>
-            )
-          })}
-        </div>
+        {loading && <Spinner label="Finding candidates…" />}
+        {loadError && <p className="msg-error">{loadError}</p>}
+        {renameError && <p className="msg-error">{renameError}</p>}
+        {!loading && candidates.length > 0 && (
+          <div className="card" style={{padding:0,overflow:'hidden'}}>
+            {candidates.map(p => {
+              const isNew = now - new Date(p.publishedAt).getTime() < THIRTY_DAYS
+              return (
+                <div key={p.id} style={{position:'relative'}}>
+                  <PlaylistCard playlist={p} selected={selected.has(p.id)} onToggle={() => toggle(p.id)} />
+                  {isNew && <span className="tag-recommended" style={{position:'absolute',top:14,right:16}}>★ new</span>}
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {!loading && candidates.length === 0 && (
+          <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
+            <p style={{fontWeight:700,fontSize:18,marginBottom:4}}>No candidates found</p>
+            <p style={{fontSize:13}}>All playlists already have [SPO] or none need it.</p>
+          </div>
+        )}
       </div>
       <RenameBulkBar
         count={selected.size}
@@ -98,6 +110,7 @@ export function TagPage() {
         onRename={renameSelected}
         onSelectAll={() => setSelected(new Set(candidates.map(p => p.id)))}
         onClear={() => setSelected(new Set())}
+        renaming={renaming}
       />
     </>
   )

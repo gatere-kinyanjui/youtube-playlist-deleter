@@ -1,1 +1,10 @@
 /* inherits .bulk-bar from neo-brutal.css */
+
+.bulk-select-n { display: inline-flex; align-items: center; gap: 4px; }
+.bulk-n-input {
+  width: 52px; padding: 6px 8px; border: 2px solid var(--bg); background: var(--bg);
+  font-family: var(--font-ui); font-size: 14px; font-weight: 700; text-align: center;
+  outline: none; color: var(--ink);
+}
+.bulk-n-input:focus { border-color: var(--yellow); }
+.bulk-n-go { font-size: 12px; padding: 6px 10px; }
