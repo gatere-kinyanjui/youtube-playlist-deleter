@@ -11,7 +11,7 @@
 /* ── Brand ──────────────────────────────────────────────────── */
 .nav-brand {
   display: flex; align-items: center; gap: 12px;
-  flex-shrink: 0; min-width: 0; overflow: hidden;
+  flex: 1 1 auto; min-width: 0; overflow: hidden;
 }
 .nav-title {
   font-family: var(--font-display); font-weight: 900;
@@ -113,7 +113,7 @@
 
 /* ── Breakpoints ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .nav-links, .nav-logout { display: none; }
+  .nav .nav-links, .nav .nav-logout { display: none; }
   .hamburger { display: flex; }
 }
 @media (max-width: 480px) {
