@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+*.md
+credentials.json
+tokens.json
+.env
+.env.*
+!.env.example
+data
