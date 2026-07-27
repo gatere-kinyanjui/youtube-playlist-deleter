@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "description": "TUI tool to manage duplicate and Spotify-imported YouTube Music playlists",
   "main": "dist/index.js",
+  "workspaces": ["shared", "web"],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "npx ts-node src/index.ts",
-    "test": "vitest run"
+    "dev": "npm run build -w @yt/shared && npx ts-node src/index.ts",
+    "test": "vitest run",
+    "prepare": "npm run build -w @yt/shared"
+  },
+  "dependencies": {
+    "@yt/shared": "*"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

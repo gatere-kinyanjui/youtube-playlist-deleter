@@ -3,11 +3,20 @@ import * as http from 'http'
 import * as net from 'net'
 import * as crypto from 'crypto'
 import * as path from 'path'
-import { TokenData, Credentials } from './types'
+import * as os from 'os'
+import { TokenData, Credentials } from '@yt/shared'
 
-const ROOT = path.join(__dirname, '..')
-const CREDENTIALS_PATH = path.join(ROOT, 'credentials.json')
-const TOKENS_PATH = path.join(ROOT, 'tokens.json')
+const CONFIG_DIR = process.env.XDG_CONFIG_HOME
+  ? path.join(process.env.XDG_CONFIG_HOME, 'youtube-playlist-deleter')
+  : path.join(os.homedir(), '.config', 'youtube-playlist-deleter')
+
+function configPath(file: string): string {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true })
+  return path.join(CONFIG_DIR, file)
+}
+
+const CREDENTIALS_PATH = configPath('credentials.json')
+const TOKENS_PATH = configPath('tokens.json')
 const SCOPE = 'https://www.googleapis.com/auth/youtube'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 

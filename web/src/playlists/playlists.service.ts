@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { AuthService } from '../auth/auth.service'
-import { DuplicateGroup, MusicProvider, MUSIC_PROVIDER, Playlist } from '../providers/music-provider.interface'
-import { TokenData } from '../auth/token-data.interface'
+import { SessionToken } from '../auth/session-token.interface'
+import { DuplicateGroup, MusicProvider, MUSIC_PROVIDER, Playlist } from '@yt/shared'
 
 const SPO_PREFIX = '[SPO] '
 
@@ -17,8 +17,8 @@ export class PlaylistsService {
     private readonly authService: AuthService,
   ) {}
 
-  async listPlaylists(token: TokenData, filters: ListFilters = {}): Promise<Playlist[]> {
-    const accessToken = await this.authService.getValidAccessToken(token)
+  async listPlaylists(token: SessionToken, encryptedRefreshToken: string | null, filters: ListFilters = {}): Promise<Playlist[]> {
+    const accessToken = await this.authService.getValidAccessToken(token, encryptedRefreshToken)
     const playlists = await this.provider.listPlaylists(accessToken)
     let result = playlists
 
@@ -33,8 +33,8 @@ export class PlaylistsService {
     return result
   }
 
-  async findDuplicates(token: TokenData): Promise<DuplicateGroup[]> {
-    const accessToken = await this.authService.getValidAccessToken(token)
+  async findDuplicates(token: SessionToken, encryptedRefreshToken: string | null): Promise<DuplicateGroup[]> {
+    const accessToken = await this.authService.getValidAccessToken(token, encryptedRefreshToken)
     const playlists = await this.provider.listPlaylists(accessToken)
     const byName = new Map<string, Playlist[]>()
     for (const p of playlists) {
@@ -55,14 +55,14 @@ export class PlaylistsService {
     return groups
   }
 
-  async tagCandidates(token: TokenData): Promise<Playlist[]> {
-    const accessToken = await this.authService.getValidAccessToken(token)
+  async tagCandidates(token: SessionToken, encryptedRefreshToken: string | null): Promise<Playlist[]> {
+    const accessToken = await this.authService.getValidAccessToken(token, encryptedRefreshToken)
     const playlists = await this.provider.listPlaylists(accessToken)
     return playlists.filter(p => !p.title.startsWith(SPO_PREFIX))
   }
 
-  async renameOne(token: TokenData, id: string, title: string, description: string): Promise<void> {
-    const accessToken = await this.authService.getValidAccessToken(token)
+  async renameOne(token: SessionToken, encryptedRefreshToken: string | null, id: string, title: string, description: string): Promise<void> {
+    const accessToken = await this.authService.getValidAccessToken(token, encryptedRefreshToken)
     await this.provider.renamePlaylist(accessToken, id, title, description)
   }
 }

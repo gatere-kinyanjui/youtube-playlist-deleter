@@ -8,7 +8,14 @@ export interface DuplicateGroup {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, { credentials: 'include', ...init })
+  const mergedInit: RequestInit = { credentials: 'include', ...init }
+  if (mergedInit.method && !['GET', 'HEAD', 'OPTIONS'].includes(mergedInit.method)) {
+    mergedInit.headers = {
+      'X-Requested-By': 'yt-manager',
+      ...(init?.headers as Record<string, string> ?? {}),
+    }
+  }
+  const res = await fetch(path, mergedInit)
   if (res.status === 401) { window.location.href = '/login'; throw new Error('unauthenticated') }
   if (!res.ok) {
     let message = `API error ${res.status}`

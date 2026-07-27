@@ -1,5 +1,5 @@
 # ── Stage 1: build React client ──────────────────────────────────────────────
-FROM node:20-alpine AS client
+FROM node:22-alpine AS client
 WORKDIR /build/client
 COPY client/package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY client/ ./
 RUN npm run build
 
 # ── Stage 2: build NestJS ─────────────────────────────────────────────────────
-FROM node:20-alpine AS server
+FROM node:22-alpine AS server
 WORKDIR /build
 COPY package*.json ./
 RUN npm ci
@@ -16,7 +16,7 @@ COPY tsconfig.json nest-cli.json ./
 RUN npx nest build
 
 # ── Stage 3: runtime ─────────────────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./

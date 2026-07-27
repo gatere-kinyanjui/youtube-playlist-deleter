@@ -1,22 +1,29 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { TokenData } from './token-data.interface'
+import { SessionToken } from './session-token.interface'
+import { decryptRefreshToken } from './refresh-cookie'
 
 @Injectable()
 export class AuthService {
   constructor(private readonly config: ConfigService) {}
 
-  async getValidAccessToken(token: TokenData): Promise<string> {
+  async getValidAccessToken(token: SessionToken, encryptedRefreshToken: string | null): Promise<string> {
     if (Date.now() < token.expiry_date - 60_000) {
       return token.access_token
     }
+    if (!encryptedRefreshToken) {
+      throw new Error('No refresh token available — sign out and back in.')
+    }
+
+    const refreshToken = decryptRefreshToken(encryptedRefreshToken, this.config.getOrThrow('SESSION_SECRET'))
+
     const res = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: this.config.getOrThrow('GOOGLE_CLIENT_ID'),
         client_secret: this.config.getOrThrow('GOOGLE_CLIENT_SECRET'),
-        refresh_token: token.refresh_token,
+        refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }),
     })

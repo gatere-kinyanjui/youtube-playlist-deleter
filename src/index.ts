@@ -1,6 +1,6 @@
 import { ensureAuth, refreshToken } from './auth'
-import { listAllPlaylists, deletePlaylist, renamePlaylist } from './api'
-import { findDuplicates } from './dedup'
+import { YoutubeProvider, findDuplicates } from '@yt/shared'
+import { Playlist } from '@yt/shared'
 import {
   showMainMenu,
   reviewGroups,
@@ -13,8 +13,9 @@ import {
   promptTimeRange,
   reviewRecentDeletions,
 } from './tui'
-import { Playlist, PlaylistRename } from './types'
+import { PlaylistRename } from './types'
 
+const youtube = new YoutubeProvider()
 const SPO_PREFIX = '[SPO] '
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
@@ -53,7 +54,7 @@ async function runDeletions(
 
   for (const playlist of toDelete) {
     try {
-      const { token: t } = await withTokenRefresh(token, t => deletePlaylist(t, playlist.id))
+      const { token: t } = await withTokenRefresh(token, t => youtube.deletePlaylist(t, playlist.id))
       token = t
       deletedCount++
       deletedIds.add(playlist.id)
@@ -138,7 +139,7 @@ async function runTag(token: string, playlists: Playlist[]): Promise<string> {
   let renamedCount = 0
   for (const r of toRename) {
     try {
-      const { token: newToken } = await withTokenRefresh(token, t => renamePlaylist(t, r.playlist.id, r.newTitle, r.playlist.description))
+      const { token: newToken } = await withTokenRefresh(token, t => youtube.renamePlaylist(t, r.playlist.id, r.newTitle, r.playlist.description))
       token = newToken
       renamedCount++
       showProgress(renamedCount, toRename.length, 'Renaming')
@@ -209,7 +210,7 @@ process.on('SIGINT', () => {
 
 async function run(): Promise<void> {
   let token = await ensureAuth()
-  let playlists = await listAllPlaylists(token)
+  let playlists = await youtube.listPlaylists(token)
 
   while (true) {
     const choice = await showMainMenu()
@@ -226,7 +227,7 @@ async function run(): Promise<void> {
 
     // Refresh the playlist list after any mutation so next mode sees current state
     try {
-      const { result, token: t } = await withTokenRefresh(token, t => listAllPlaylists(t))
+      const { result, token: t } = await withTokenRefresh(token, t => youtube.listPlaylists(t))
       playlists = result
       token = t
     } catch {

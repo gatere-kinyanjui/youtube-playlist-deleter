@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './ProgressDrawer.css'
 
 interface ProgressEvent {
-  done: number; total: number; complete?: boolean; error?: string; current?: string
+  done: number; total: number; complete?: boolean; error?: string; current?: string; quotaExceeded?: boolean
 }
 
 interface Props {
@@ -40,7 +40,11 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
 
   return (
     <div className={`progress-drawer ${visible ? 'visible' : ''}`}>
-      {progress?.error ? (
+      {progress?.error && progress.quotaExceeded ? (
+        <div className="progress-quota-msg">
+          ⚠ Quota exceeded — {progress.done}/{progress.total} deleted. Resets at midnight Pacific.
+        </div>
+      ) : progress?.error ? (
         <div className="progress-quota-msg">
           ⚠ {progress.error} ({progress.done}/{progress.total} deleted)
         </div>

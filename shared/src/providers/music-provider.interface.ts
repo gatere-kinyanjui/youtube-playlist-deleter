@@ -3,13 +3,13 @@ export interface Playlist {
   title: string
   description: string
   itemCount: number
-  publishedAt: string          // ISO 8601
-  provider: 'youtube' | 'spotify' | 'apple'
+  publishedAt: string
+  provider: string
 }
 
 export interface DuplicateGroup {
   name: string
-  playlists: Playlist[]        // most tracks first, then oldest on tie
+  playlists: Playlist[]
   keepIndex: number
 }
 

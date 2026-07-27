@@ -1,4 +1,4 @@
-import { Playlist, DuplicateGroup } from './types'
+import { Playlist, DuplicateGroup } from './providers/music-provider.interface'
 
 export function findDuplicates(playlists: Playlist[]): DuplicateGroup[] {
   const byName = new Map<string, Playlist[]>()

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { Strategy, VerifyCallback } from 'passport-google-oauth20'
 import { Request } from 'express'
-import { TokenData } from './token-data.interface'
+import { SessionToken } from './session-token.interface'
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -21,8 +21,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     return { access_type: 'offline', prompt: 'consent' }
   }
 
-  // We only need tokens, not the user profile — skip the UserInfo API call
-  // (the default implementation calls UserInfo which requires profile/openid scope)
   override userProfile(_accessToken: string, done: (err: Error | null, profile?: object) => void): void {
     done(null, {})
   }
@@ -34,11 +32,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     _profile: unknown,
     done: VerifyCallback,
   ): void {
-    const token: TokenData = {
+    const sessionToken: SessionToken = {
       access_token: accessToken,
-      refresh_token: refreshToken,
       expiry_date: Date.now() + 3600 * 1000,
     }
-    done(null, token)   // req.user = token
+    done(null, { sessionToken, refreshToken })
   }
 }

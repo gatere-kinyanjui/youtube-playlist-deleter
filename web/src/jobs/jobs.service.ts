@@ -1,8 +1,9 @@
+import * as crypto from 'crypto'
 import { HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { Observable, Subject, finalize } from 'rxjs'
 import { AuthService } from '../auth/auth.service'
-import { TokenData } from '../auth/token-data.interface'
-import { MusicProvider, MUSIC_PROVIDER } from '../providers/music-provider.interface'
+import { SessionToken } from '../auth/session-token.interface'
+import { MusicProvider, MUSIC_PROVIDER } from '@yt/shared'
 
 interface ProgressEvent {
   data: {
@@ -11,12 +12,14 @@ interface ProgressEvent {
     current?: string
     complete?: boolean
     error?: string
+    quotaExceeded?: boolean
   }
 }
 
 interface JobState {
   subject: Subject<ProgressEvent>
   aborted: boolean
+  sessionId: string
 }
 
 @Injectable()
@@ -28,12 +31,12 @@ export class JobsService {
     private readonly authService: AuthService,
   ) {}
 
-  startDeleteJob(token: TokenData, ids: string[]): string {
-    const jobId = Math.random().toString(36).slice(2, 10)
+  startDeleteJob(token: SessionToken, encryptedRefreshToken: string | null, ids: string[], sessionId: string): string {
+    const jobId = crypto.randomUUID().slice(0, 8)
     const subject = new Subject<ProgressEvent>()
-    const job: JobState = { subject, aborted: false }
+    const job: JobState = { subject, aborted: false, sessionId }
     this.jobs.set(jobId, job)
-    this.runDeletions(token, ids, subject, jobId, job).catch((err: unknown) => {
+    this.runDeletions(token, encryptedRefreshToken, ids, subject, jobId, job).catch((err: unknown) => {
       subject.next({ data: { done: 0, total: ids.length, error: (err as Error).message ?? 'Unexpected error' } })
       subject.next({ data: { done: 0, total: ids.length, complete: true } })
       subject.complete()
@@ -42,16 +45,16 @@ export class JobsService {
     return jobId
   }
 
-  getProgress(jobId: string): Observable<ProgressEvent> {
+  getProgress(jobId: string, sessionId: string): Observable<ProgressEvent> {
     const job = this.jobs.get(jobId)
     if (!job) throw new NotFoundException(`Job ${jobId} not found`)
-    // finalize fires on both normal completion and SSE client disconnect;
-    // setting aborted stops the deletion loop when the client navigates away
+    if (job.sessionId !== sessionId) throw new NotFoundException(`Job ${jobId} not found`)
     return job.subject.asObservable().pipe(finalize(() => { job.aborted = true }))
   }
 
   private async runDeletions(
-    token: TokenData,
+    token: SessionToken,
+    encryptedRefreshToken: string | null,
     ids: string[],
     subject: Subject<ProgressEvent>,
     jobId: string,
@@ -64,13 +67,15 @@ export class JobsService {
     for (const id of ids) {
       if (job.aborted) break
       try {
-        const accessToken = await this.authService.getValidAccessToken(token)
+        const accessToken = await this.authService.getValidAccessToken(token, encryptedRefreshToken)
+        if (job.aborted) break
         await this.provider.deletePlaylist(accessToken, id)
+        if (job.aborted) break
         done++
         subject.next({ data: { done, total, current: id } })
       } catch (err: unknown) {
         if (err instanceof HttpException && err.getStatus() === 429) {
-          subject.next({ data: { done, total, error: err.message } })
+          subject.next({ data: { done, total, error: 'YouTube API quota exceeded — resets at midnight Pacific Time.', quotaExceeded: true } })
           break
         }
         failed++

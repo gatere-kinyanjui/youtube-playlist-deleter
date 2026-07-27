@@ -1,5 +1,6 @@
 import * as readline from 'readline'
-import { DuplicateGroup, Playlist, PlaylistRename, MenuChoice } from './types'
+import { DuplicateGroup, Playlist } from '@yt/shared'
+import { PlaylistRename, MenuChoice } from './types'
 import { parseTimeRange } from './time'
 
 // ANSI helpers

@@ -7,3 +7,5 @@ tokens.json
 .env.local
 .env.production
 !.env.example
+data/
+

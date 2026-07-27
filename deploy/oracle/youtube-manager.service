@@ -1,0 +1,17 @@
+[Unit]
+Description=YouTube Playlist Manager
+After=network.target
+
+[Service]
+Type=simple
+User=ytm
+WorkingDirectory=/opt/youtube-playlist-deleter
+Environment=NODE_ENV=production
+Environment=PORT=3001
+EnvironmentFile=/opt/youtube-playlist-deleter/.env.production
+ExecStart=/usr/bin/node /opt/youtube-playlist-deleter/web/dist/main.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
