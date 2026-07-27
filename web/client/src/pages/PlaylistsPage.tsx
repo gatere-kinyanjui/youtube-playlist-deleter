@@ -85,7 +85,7 @@ export function PlaylistsPage() {
         {loadError && <p className="msg-error">{loadError}</p>}
         {deleteError && <p className="msg-error">{deleteError}</p>}
         {!loading && all.length > 0 && (
-          <div className="card" style={{padding:0, overflow:'hidden'}}>
+          <div className="card card-list">
             {all.map(p => (
               <PlaylistCard
                 key={p.id}
@@ -98,9 +98,9 @@ export function PlaylistsPage() {
           </div>
         )}
         {!loading && all.length === 0 && (
-          <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
-            <p style={{fontWeight:700,fontSize:18,marginBottom:4}}>No playlists found</p>
-            <p style={{fontSize:13}}>Try adjusting your search or time filter.</p>
+          <div className="card card-empty">
+            <p className="card-empty-title">No playlists found</p>
+            <p className="card-empty-body">Try adjusting your search or time filter.</p>
           </div>
         )}
       </div>

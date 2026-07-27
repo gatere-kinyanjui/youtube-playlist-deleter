@@ -97,9 +97,7 @@ export function RecentPage() {
     <>
       <div className="page">
         <h1 className="page-title">Delete Recent</h1>
-        <p style={{marginBottom:16,color:'#555',fontWeight:600}}>
-          Find playlists created within a time range, then bulk delete.
-        </p>
+        <p className="page-intro">Find playlists created within a time range, then bulk delete.</p>
         <div className="recent-search">
           <div className="recent-search-field">
             <label className="recent-label" htmlFor="range-input">Newer than</label>
@@ -117,17 +115,17 @@ export function RecentPage() {
             {searching ? 'Searching…' : 'Find'}
           </button>
         </div>
-        {error && <p className="msg-error" style={{marginBottom:16}}>{error}</p>}
+        {error && <p className="msg-error">{error}</p>}
         {searching && <Spinner label="Searching…" />}
 
         {!searching && searched && playlists.length === 0 && (
-          <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
-            <p style={{fontWeight:700,fontSize:18,marginBottom:4}}>No playlists found</p>
-            <p style={{fontSize:13}}>Try a wider time range.</p>
+          <div className="card card-empty">
+            <p className="card-empty-title">No playlists found</p>
+            <p className="card-empty-body">Try a wider time range.</p>
           </div>
         )}
         {!searching && playlists.length > 0 && (
-          <div className="card" style={{padding:0,overflow:'hidden',marginTop:16}}>
+          <div className="card card-list" style={{marginTop:16}}>
             {playlists.map(p => (
               <PlaylistCard key={p.id} playlist={p} selected={selected.has(p.id)} removing={removing.has(p.id)} onToggle={() => toggle(p.id)} />
             ))}

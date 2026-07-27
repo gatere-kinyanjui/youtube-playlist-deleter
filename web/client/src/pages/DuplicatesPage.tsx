@@ -62,8 +62,8 @@ export function DuplicatesPage() {
   return (
     <>
       <div className="page">
-        <div style={{display:'flex',alignItems:'baseline',gap:16,marginBottom:24}}>
-          <h1 className="page-title" style={{margin:0}}>Duplicates</h1>
+        <div className="page-header">
+          <h1 className="page-title">Duplicates</h1>
           {!loading && groups.length > 0 && (
             <button className="btn btn-danger" onClick={deleteAll}>
               Delete {toDelete} duplicates
@@ -74,9 +74,9 @@ export function DuplicatesPage() {
         {loadError && <p className="msg-error">{loadError}</p>}
         {deleteError && <p className="msg-error">{deleteError}</p>}
         {!loading && groups.length === 0 && (
-          <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
-            <p style={{fontWeight:700,fontSize:18,marginBottom:4}}>No duplicates found</p>
-            <p style={{fontSize:13}}>Your playlists are all unique!</p>
+          <div className="card card-empty">
+            <p className="card-empty-title">No duplicates found</p>
+            <p className="card-empty-body">Your playlists are all unique!</p>
           </div>
         )}
         {groups.map((g, i) => (

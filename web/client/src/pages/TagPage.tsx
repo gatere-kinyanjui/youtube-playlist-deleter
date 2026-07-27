@@ -17,10 +17,10 @@ const RenameBulkBar = ({ count, total, onRename, onSelectAll, onClear, renaming 
       <button className="btn btn-secondary" onClick={onRename} disabled={renaming}>
         {renaming ? 'Tagging…' : `Add [SPO] to ${count}`}
       </button>
-      <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={allSelected ? onClear : onSelectAll}>
+      <button className="btn btn-ghost" onClick={allSelected ? onClear : onSelectAll}>
         {allSelected ? 'Deselect all' : `Select all ${total}`}
       </button>
-      <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={onClear}>Clear</button>
+      <button className="btn btn-ghost" onClick={onClear}>Clear</button>
     </div>
   )
 }
@@ -78,14 +78,14 @@ export function TagPage() {
     <>
       <div className="page">
         <h1 className="page-title">Tag with [SPO]</h1>
-        <p style={{marginBottom:16,color:'#555',fontWeight:600}}>
+        <p className="page-intro">
           Playlists younger than 30 days are pre-selected <span className="tag-recommended">★ new</span>
         </p>
         {loading && <Spinner label="Finding candidates…" />}
         {loadError && <p className="msg-error">{loadError}</p>}
         {renameError && <p className="msg-error">{renameError}</p>}
         {!loading && candidates.length > 0 && (
-          <div className="card" style={{padding:0,overflow:'hidden'}}>
+          <div className="card card-list">
             {candidates.map(p => {
               const isNew = now - new Date(p.publishedAt).getTime() < THIRTY_DAYS
               return (
@@ -98,9 +98,9 @@ export function TagPage() {
           </div>
         )}
         {!loading && candidates.length === 0 && (
-          <div className="card" style={{padding:32,textAlign:'center',color:'#999'}}>
-            <p style={{fontWeight:700,fontSize:18,marginBottom:4}}>No candidates found</p>
-            <p style={{fontSize:13}}>All playlists already have [SPO] or none need it.</p>
+          <div className="card card-empty">
+            <p className="card-empty-title">No candidates found</p>
+            <p className="card-empty-body">All playlists already have [SPO] or none need it.</p>
           </div>
         )}
       </div>
