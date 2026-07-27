@@ -1,11 +1,19 @@
-.playlist-row-body { display: flex; flex-direction: column; gap: 2px; flex: 1; cursor: pointer; }
-.playlist-title { font-weight: 600; font-size: 15px; }
-.playlist-meta  { font-size: 12px; color: #666; }
+.playlist-row-body {
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1; cursor: pointer; min-width: 0;
+}
+.playlist-title {
+  font-weight: 800; font-size: 16px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.playlist-meta { font-size: 13px; color: #555; font-weight: 500; }
 
+/* Collapse animation when row is being deleted */
 .playlist-row {
-  transition: opacity 250ms ease, max-height 300ms ease 150ms, padding 300ms ease 150ms, border 300ms ease 150ms;
-  max-height: 200px;
-  overflow: hidden;
+  transition: opacity 250ms ease, max-height 300ms ease 150ms,
+    padding 300ms ease 150ms, border 300ms ease 150ms;
+  max-height: 200px; overflow: hidden;
 }
 .playlist-row.removing {
   opacity: 0;
