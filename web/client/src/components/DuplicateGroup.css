@@ -1,22 +1,44 @@
-.dg-card { padding: 0; overflow: hidden; margin-bottom: 16px; }
+.dg-card { padding: 0; overflow: hidden; margin-bottom: 24px; }
+
 .dg-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; background: var(--bg); border-bottom: var(--border);
-  cursor: pointer; font-family: var(--font-display); font-size: 15px;
+  padding: 16px 20px; background: var(--bg); border-bottom: var(--border);
+  cursor: pointer;
+  font-family: var(--font-display); font-size: 18px; font-weight: 900;
+  letter-spacing: -0.02em; text-transform: uppercase;
+  transition: background 80ms;
 }
 .dg-header:hover { background: var(--yellow); }
-.dg-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #eee; }
-.dg-row.keep   { background: rgba(0,208,132,0.08); }
-.dg-row.delete { background: rgba(255,45,85,0.06); }
-.dg-badge { font-size: 11px; font-weight: 800; font-family: var(--font-display); min-width: 58px; flex-shrink: 0; }
+
+.dg-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; border-bottom: 2px solid var(--ink);
+  transition: background 80ms;
+}
+.dg-row:last-child { border-bottom: none; }
+.dg-row.keep   { background: rgba(0,208,132,0.06); }
+.dg-row.delete { background: rgba(255,45,85,0.04); }
+.dg-row:hover  { background: #F5F5F0; }
+
+.dg-badge {
+  font-size: 11px; font-weight: 900; font-family: var(--font-display);
+  min-width: 56px; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 3px 8px; border: 2px solid currentColor;
+  text-align: center;
+}
 .dg-row.keep   .dg-badge { color: var(--green); }
 .dg-row.delete .dg-badge { color: var(--pink); }
-.dg-title { flex: 1; font-weight: 600; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dg-meta  { font-size: 12px; color: #888; white-space: nowrap; flex-shrink: 0; }
+
+.dg-title {
+  flex: 1; font-weight: 700; font-size: 15px;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dg-meta { font-size: 13px; color: #666; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
 
 @media (max-width: 599px) {
-  .dg-header { font-size: 14px; padding: 10px 12px; }
-  .dg-row { gap: 8px; padding: 10px 12px; }
-  .dg-badge { min-width: 46px; font-size: 10px; }
+  .dg-header { font-size: 15px; padding: 12px 14px; }
+  .dg-row { gap: 8px; padding: 10px 14px; }
+  .dg-badge { min-width: 44px; font-size: 10px; }
   .dg-meta { display: none; }
 }
