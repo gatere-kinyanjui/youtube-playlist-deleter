@@ -1,14 +1,28 @@
 :root {
-  --bg:       #F5F0E8;
-  --ink:      #0A0A0A;
-  --pink:     #FF2D55;
-  --yellow:   #FFE600;
-  --blue:     #0057FF;
-  --green:    #00D084;
-  --surface:  #FFFFFF;
-  --border:   2px solid var(--ink);
-  --shadow:   4px 4px 0 var(--ink);
-  --shadow-lg:6px 6px 0 var(--ink);
+  --bg:      #FFFDF5;
+  --surface: #FFFFFF;
+  --ink:     #000000;
+
+  --yellow:  #FFE600;
+  --pink:    #FF2D55;
+  --green:   #00D084;
+
+  --border:    3px solid var(--ink);
+  --shadow:    4px 4px 0 var(--ink);
+  --shadow-lg: 6px 6px 0 var(--ink);
+  --shadow-sm: 2px 2px 0 var(--ink);
+
   --font-display: 'Syne', sans-serif;
   --font-ui:      'Space Grotesk', sans-serif;
+
+  --nav-h:    68px;
+  --page-max: 900px;
+  --page-pad: 20px;
+}
+
+@media (max-width: 480px) {
+  :root {
+    --nav-h:    60px;
+    --page-pad: 14px;
+  }
 }
