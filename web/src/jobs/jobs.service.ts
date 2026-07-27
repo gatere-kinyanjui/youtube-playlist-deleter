@@ -16,7 +16,7 @@ export interface JobStatus {
 
 interface JobState {
   status: JobStatus
-  aborted: boolean
+  lastPolledAt: number
   sessionId: string
 }
 
@@ -33,7 +33,7 @@ export class JobsService {
     const jobId = crypto.randomUUID().slice(0, 8)
     const job: JobState = {
       status: { done: 0, total: ids.length, failed: 0, deletedIds: [], complete: false },
-      aborted: false,
+      lastPolledAt: Date.now(),
       sessionId,
     }
     this.jobs.set(jobId, job)
@@ -49,6 +49,7 @@ export class JobsService {
     const job = this.jobs.get(jobId)
     if (!job) throw new NotFoundException(`Job ${jobId} not found`)
     if (job.sessionId !== sessionId) throw new NotFoundException(`Job ${jobId} not found`)
+    job.lastPolledAt = Date.now()
     return job.status
   }
 
@@ -60,12 +61,12 @@ export class JobsService {
     job: JobState,
   ): Promise<void> {
     for (const id of ids) {
-      if (job.aborted) break
+      if (Date.now() - job.lastPolledAt > 10_000) break
       try {
         const accessToken = await this.authService.getValidAccessToken(token, encryptedRefreshToken)
-        if (job.aborted) break
+        if (Date.now() - job.lastPolledAt > 10_000) break
         await this.provider.deletePlaylist(accessToken, id)
-        if (job.aborted) break
+        if (Date.now() - job.lastPolledAt > 10_000) break
         job.status.done++
         job.status.deletedIds.push(id)
       } catch (err: unknown) {

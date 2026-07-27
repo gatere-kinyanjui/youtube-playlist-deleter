@@ -23,33 +23,35 @@ export function Nav() {
   function close() { setMenuOpen(false) }
 
   return (
-    <nav className="nav">
-      <div className="nav-brand">
-        <span className="chip chip-yt">YT</span>
-        <span className="nav-title">Playlist Manager</span>
-      </div>
-
-      <div className="nav-right">
-        <div className="nav-links">
-          {links.map(l => (
-            <NavLink key={l.to} to={l.to} end className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
-              {l.label}
-            </NavLink>
-          ))}
+    <>
+      <nav className="nav">
+        <div className="nav-brand">
+          <span className="chip chip-yt">YT</span>
+          <span className="nav-title">Playlist Manager</span>
         </div>
-        <button className="btn btn-ghost nav-logout" onClick={logout}>Log out</button>
 
-        <button
-          className={`hamburger ${menuOpen ? 'hamburger--open' : ''}`}
-          onClick={() => setMenuOpen(o => !o)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-        >
-          <span className="hamburger-line" />
-          <span className="hamburger-line" />
-          <span className="hamburger-line" />
-        </button>
-      </div>
+        <div className="nav-right">
+          <div className="nav-links">
+            {links.map(l => (
+              <NavLink key={l.to} to={l.to} end className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
+                {l.label}
+              </NavLink>
+            ))}
+          </div>
+          <button className="btn btn-ghost nav-logout" onClick={logout}>Log out</button>
+
+          <button
+            className={`hamburger ${menuOpen ? 'hamburger--open' : ''}`}
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+          >
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+          </button>
+        </div>
+      </nav>
 
       {menuOpen && <div className="menu-overlay" onClick={close} />}
 
@@ -69,6 +71,6 @@ export function Nav() {
           <button className="btn btn-ghost" onClick={logout}>Log out</button>
         </div>
       </div>
-    </nav>
+    </>
   )
 }

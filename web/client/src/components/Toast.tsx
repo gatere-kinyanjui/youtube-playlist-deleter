@@ -29,11 +29,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const removeToast = useCallback((id: string) => {
+    clearTimeout(timers.current.get(id))
+    timers.current.delete(id)
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t))
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-      timers.current.delete(id)
-    }, 250)
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 250)
   }, [])
 
   const addToast = useCallback((type: ToastType, message: string, duration = 4000) => {

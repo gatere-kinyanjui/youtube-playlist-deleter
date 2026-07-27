@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
+import { SkipThrottle } from '@nestjs/throttler'
 import { Request } from 'express'
 import { SessionAuthGuard } from '../common/session-auth.guard'
 import { CsrfGuard } from '../common/csrf.guard'
@@ -22,6 +23,7 @@ export class JobsController {
     return { jobId }
   }
 
+  @SkipThrottle()
   @Get(':jobId/status')
   status(@Req() req: Request, @Param('jobId') jobId: string): JobStatus {
     return this.jobsService.getStatus(jobId, req.sessionID)

@@ -14,10 +14,23 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
   const doneRef = useRef(onDone)
   const jobRef = useRef<string | null>(null)
   const finishedRef = useRef(false)
+  const progressRef = useRef<JobStatus | null>(null)
   doneRef.current = onDone
 
+  function updateProgress(s: JobStatus) {
+    progressRef.current = s
+    setProgress(s)
+  }
+
+  function scheduleComplete(status: JobStatus, matchJob: string) {
+    completeTimerRef.current = setTimeout(() => {
+      completeTimerRef.current = null
+      if (jobRef.current === matchJob) doneRef.current(status)
+    }, 1500)
+  }
+
   useEffect(() => {
-    if (!jobId) { setProgress(null); return }
+    if (!jobId) { progressRef.current = null; setProgress(null); return }
     jobRef.current = jobId
     finishedRef.current = false
 
@@ -28,15 +41,12 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
         const status = await api.jobs.status(jobId)
         if (jobRef.current !== currentJob) return
         if (finishedRef.current) return
-        setProgress(status)
+        updateProgress(status)
         if (status.complete) {
           finishedRef.current = true
           if (intervalRef.current) clearInterval(intervalRef.current)
           intervalRef.current = null
-          completeTimerRef.current = setTimeout(() => {
-            completeTimerRef.current = null
-            if (jobRef.current === jobId) doneRef.current(status)
-          }, 1500)
+          scheduleComplete(status, jobId)
         }
       } catch {
         if (jobRef.current !== currentJob) return
@@ -44,9 +54,17 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
         finishedRef.current = true
         if (intervalRef.current) clearInterval(intervalRef.current)
         intervalRef.current = null
-        const errStatus: JobStatus = { done: 0, total: 0, failed: 0, deletedIds: [], complete: true, error: 'Connection lost' }
-        setProgress(errStatus)
-        doneRef.current(errStatus)
+        const prev = progressRef.current
+        const errStatus: JobStatus = {
+          done: prev?.done ?? 0,
+          total: prev?.total ?? 0,
+          failed: prev?.failed ?? 0,
+          deletedIds: prev?.deletedIds ?? [],
+          complete: true,
+          error: 'Connection lost',
+        }
+        updateProgress(errStatus)
+        scheduleComplete(errStatus, jobId)
       }
     }, 1500)
 
@@ -54,11 +72,12 @@ export function ProgressDrawer({ jobId, onDone }: Props) {
       if (intervalRef.current) clearInterval(intervalRef.current)
       if (completeTimerRef.current) clearTimeout(completeTimerRef.current)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId])
 
   if (!jobId || !progress) return null
 
-  const pct = Math.round((progress.done / progress.total) * 100)
+  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0
 
   return (
     <div className={`progress-drawer visible`}>
