@@ -12,12 +12,15 @@ const links = [
 export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false)
 
-  function closeMenu() { setMenuOpen(false) }
-
   async function logout() {
-    await fetch('/auth/logout', { credentials: 'include' })
-    window.location.href = '/login'
+    try {
+      await fetch('/auth/logout', { credentials: 'include' })
+    } finally {
+      window.location.href = '/login'
+    }
   }
+
+  function close() { setMenuOpen(false) }
 
   return (
     <nav className="nav">
@@ -26,27 +29,29 @@ export function Nav() {
         <span className="nav-title">Playlist Manager</span>
       </div>
 
-      <div className="nav-links-desktop">
-        {links.map(l => (
-          <NavLink key={l.to} to={l.to} end className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
-            {l.label}
-          </NavLink>
-        ))}
+      <div className="nav-right">
+        <div className="nav-links">
+          {links.map(l => (
+            <NavLink key={l.to} to={l.to} end className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
+              {l.label}
+            </NavLink>
+          ))}
+        </div>
         <button className="btn btn-ghost nav-logout" onClick={logout}>Log out</button>
+
+        <button
+          className={`hamburger ${menuOpen ? 'hamburger--open' : ''}`}
+          onClick={() => setMenuOpen(o => !o)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+        </button>
       </div>
 
-      <button
-        className={`hamburger ${menuOpen ? 'hamburger--open' : ''}`}
-        onClick={() => setMenuOpen(o => !o)}
-        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-        aria-expanded={menuOpen}
-      >
-        <span className="hamburger-line" />
-        <span className="hamburger-line" />
-        <span className="hamburger-line" />
-      </button>
-
-      {menuOpen && <div className="menu-overlay" onClick={closeMenu} />}
+      {menuOpen && <div className="menu-overlay" onClick={close} />}
 
       <div className={`menu-drawer ${menuOpen ? 'menu-drawer--open' : ''}`}>
         {links.map(l => (
@@ -55,12 +60,14 @@ export function Nav() {
             to={l.to}
             end
             className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
-            onClick={closeMenu}
+            onClick={close}
           >
             {l.label}
           </NavLink>
         ))}
-        <button className="btn btn-ghost nav-logout" onClick={logout}>Log out</button>
+        <div className="menu-drawer-footer">
+          <button className="btn btn-ghost" onClick={logout}>Log out</button>
+        </div>
       </div>
     </nav>
   )
