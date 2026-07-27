@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/gatere-kinyanjui/youtube-playlist-deleter:latest
     ports:
       - "3001:3001"
     volumes:
