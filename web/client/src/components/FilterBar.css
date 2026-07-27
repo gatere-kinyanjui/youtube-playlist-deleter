@@ -1,10 +1,22 @@
-.filter-bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-.filter-search-wrap { display: flex; align-items: center; gap: 10px; max-width: 400px; }
-.filter-search { flex: 1; }
+.filter-bar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+.filter-search-wrap { max-width: 420px; }
+.filter-search { width: 100%; }
 .filter-days { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Day buttons — always visible border, no inline overrides needed */
+.filter-days .btn {
+  min-height: 40px; padding: 8px 16px; font-size: 13px;
+  border: 2px solid var(--ink); box-shadow: none;
+  background: var(--surface);
+}
+.filter-days .btn:hover  { box-shadow: var(--shadow-sm); transform: translate(-1px,-1px); }
+.filter-days .btn:active { transform: translate(4px,4px); box-shadow: none; }
+
+/* Selected day button gets btn-secondary class — override shadows appropriately */
+.filter-days .btn.btn-secondary { box-shadow: var(--shadow); }
+.filter-days .btn.btn-secondary:hover { box-shadow: var(--shadow-lg); transform: translate(-2px,-2px); }
 
 @media (max-width: 599px) {
   .filter-search-wrap { max-width: 100%; }
-  .filter-days { gap: 6px; }
-  .filter-days .btn { font-size: 13px; padding: 8px 12px; }
+  .filter-days .btn { font-size: 12px; padding: 7px 12px; min-height: 38px; }
 }
