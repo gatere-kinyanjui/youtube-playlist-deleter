@@ -7,6 +7,11 @@ export interface DuplicateGroup {
   name: string; playlists: Playlist[]; keepIndex: number
 }
 
+export interface JobStatus {
+  done: number; total: number; failed: number; deletedIds: string[]
+  complete: boolean; error?: string; quotaExceeded?: boolean
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const mergedInit: RequestInit = { credentials: 'include', ...init }
   if (mergedInit.method && !['GET', 'HEAD', 'OPTIONS'].includes(mergedInit.method)) {
@@ -53,5 +58,7 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids }),
       }),
+    status: (jobId: string) =>
+      apiFetch<JobStatus>(`/api/jobs/${jobId}/status`),
   },
 }

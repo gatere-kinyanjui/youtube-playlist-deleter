@@ -1,31 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api, Playlist } from '../api'
 import { BulkActionBar } from '../components/BulkActionBar'
 import { FilterBar } from '../components/FilterBar'
 import { PlaylistCard } from '../components/PlaylistCard'
 import { ProgressDrawer } from '../components/ProgressDrawer'
 
-const PAGE_SIZE = 30
-
 export function PlaylistsPage() {
   const [all, setAll] = useState<Playlist[]>([])
-  const [visible, setVisible] = useState<Playlist[]>([])
   const [selected, setSelected] = useState(new Set<string>())
   const [jobId, setJobId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const pageRef = useRef(1)
 
   const load = useCallback(async (params?: { search?: string; days?: number }) => {
     setLoading(true)
     setLoadError(null)
-    pageRef.current = 1
     try {
       const playlists = await api.playlists.list(params)
       setAll(playlists)
-      setVisible(playlists.slice(0, PAGE_SIZE))
       setSelected(new Set())
     } catch (err: unknown) {
       setLoadError((err as Error).message)
@@ -35,20 +28,6 @@ export function PlaylistsPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
-
-  // Infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && visible.length < all.length) {
-        const next = pageRef.current + 1
-        pageRef.current = next
-        setVisible(all.slice(0, next * PAGE_SIZE))
-      }
-    }, { threshold: 0.1 })
-    const el = sentinelRef.current
-    if (el) observer.observe(el)
-    return () => { if (el) observer.unobserve(el) }
-  }, [all, visible.length])
 
   function toggle(id: string) {
     setSelected(prev => {
@@ -82,7 +61,7 @@ export function PlaylistsPage() {
         {loadError && <p style={{color:'var(--pink)',fontWeight:700}}>{loadError}</p>}
         {deleteError && <p style={{color:'var(--pink)',fontWeight:700}}>{deleteError}</p>}
         <div className="card" style={{padding:0, overflow:'hidden'}}>
-          {visible.map(p => (
+          {all.map(p => (
             <PlaylistCard
               key={p.id}
               playlist={p}
@@ -90,11 +69,6 @@ export function PlaylistsPage() {
               onToggle={() => toggle(p.id)}
             />
           ))}
-          {visible.length < all.length && (
-            <div ref={sentinelRef} style={{padding:16,textAlign:'center',color:'#999',fontSize:13}}>
-              Loading more…
-            </div>
-          )}
           {!loading && all.length === 0 && (
             <div style={{padding:32,textAlign:'center',color:'#999'}}>No playlists found.</div>
           )}
@@ -102,9 +76,9 @@ export function PlaylistsPage() {
       </div>
       <BulkActionBar
         count={selected.size}
-        total={visible.length}
+        total={all.length}
         onDelete={deleteSelected}
-        onSelectAll={() => setSelected(new Set(visible.map(p => p.id)))}
+        onSelectAll={() => setSelected(new Set(all.map(p => p.id)))}
         onClear={() => setSelected(new Set())}
       />
       <ProgressDrawer jobId={jobId} onDone={onDone} />

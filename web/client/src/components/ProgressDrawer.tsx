@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { api } from '../api'
 import './ProgressDrawer.css'
 
 interface ProgressEvent {
-  done: number; total: number; complete?: boolean; error?: string; current?: string; quotaExceeded?: boolean
+  done: number; total: number; complete?: boolean; error?: string; quotaExceeded?: boolean
 }
 
 interface Props {
@@ -12,28 +13,31 @@ interface Props {
 
 export function ProgressDrawer({ jobId, onDone }: Props) {
   const [progress, setProgress] = useState<ProgressEvent | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const doneRef = useRef(onDone)
+  doneRef.current = onDone
 
   useEffect(() => {
     if (!jobId) { setProgress(null); return }
 
-    let timerId: ReturnType<typeof setTimeout> | null = null
-    const es = new EventSource(`/api/jobs/${jobId}/progress`, { withCredentials: true })
-
-    es.onmessage = (e: MessageEvent<string>) => {
-      const data = JSON.parse(e.data) as ProgressEvent
-      setProgress(data)
-      if (data.complete) {
-        es.close()
-        timerId = setTimeout(onDone, 1500)
+    intervalRef.current = setInterval(async () => {
+      try {
+        const status = await api.jobs.status(jobId)
+        setProgress(status)
+        if (status.complete) {
+          if (intervalRef.current) clearInterval(intervalRef.current)
+          setTimeout(() => doneRef.current(), 1500)
+        }
+      } catch {
+        if (intervalRef.current) clearInterval(intervalRef.current)
+        doneRef.current()
       }
-    }
-    es.onerror = () => { es.close(); onDone() }
+    }, 1500)
 
     return () => {
-      es.close()
-      if (timerId !== null) clearTimeout(timerId)
+      if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [jobId, onDone])
+  }, [jobId])
 
   const pct = progress ? Math.round((progress.done / progress.total) * 100) : 0
   const visible = !!jobId

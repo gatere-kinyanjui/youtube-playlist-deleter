@@ -1,23 +1,21 @@
 import * as crypto from 'crypto'
 import { HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common'
-import { Observable, Subject, finalize } from 'rxjs'
 import { AuthService } from '../auth/auth.service'
 import { SessionToken } from '../auth/session-token.interface'
 import { MusicProvider, MUSIC_PROVIDER } from '@yt/shared'
 
-interface ProgressEvent {
-  data: {
-    done: number
-    total: number
-    current?: string
-    complete?: boolean
-    error?: string
-    quotaExceeded?: boolean
-  }
+export interface JobStatus {
+  done: number
+  total: number
+  failed: number
+  deletedIds: string[]
+  complete: boolean
+  error?: string
+  quotaExceeded?: boolean
 }
 
 interface JobState {
-  subject: Subject<ProgressEvent>
+  status: JobStatus
   aborted: boolean
   sessionId: string
 }
@@ -33,37 +31,34 @@ export class JobsService {
 
   startDeleteJob(token: SessionToken, encryptedRefreshToken: string | null, ids: string[], sessionId: string): string {
     const jobId = crypto.randomUUID().slice(0, 8)
-    const subject = new Subject<ProgressEvent>()
-    const job: JobState = { subject, aborted: false, sessionId }
+    const job: JobState = {
+      status: { done: 0, total: ids.length, failed: 0, deletedIds: [], complete: false },
+      aborted: false,
+      sessionId,
+    }
     this.jobs.set(jobId, job)
-    this.runDeletions(token, encryptedRefreshToken, ids, subject, jobId, job).catch((err: unknown) => {
-      subject.next({ data: { done: 0, total: ids.length, error: (err as Error).message ?? 'Unexpected error' } })
-      subject.next({ data: { done: 0, total: ids.length, complete: true } })
-      subject.complete()
+    this.runDeletions(token, encryptedRefreshToken, ids, jobId, job).catch((err: unknown) => {
+      job.status.error = (err as Error).message ?? 'Unexpected error'
+      job.status.complete = true
       setTimeout(() => this.jobs.delete(jobId), 30_000)
     })
     return jobId
   }
 
-  getProgress(jobId: string, sessionId: string): Observable<ProgressEvent> {
+  getStatus(jobId: string, sessionId: string): JobStatus {
     const job = this.jobs.get(jobId)
     if (!job) throw new NotFoundException(`Job ${jobId} not found`)
     if (job.sessionId !== sessionId) throw new NotFoundException(`Job ${jobId} not found`)
-    return job.subject.asObservable().pipe(finalize(() => { job.aborted = true }))
+    return job.status
   }
 
   private async runDeletions(
     token: SessionToken,
     encryptedRefreshToken: string | null,
     ids: string[],
-    subject: Subject<ProgressEvent>,
     jobId: string,
     job: JobState,
   ): Promise<void> {
-    const total = ids.length
-    let done = 0
-    let failed = 0
-
     for (const id of ids) {
       if (job.aborted) break
       try {
@@ -71,22 +66,27 @@ export class JobsService {
         if (job.aborted) break
         await this.provider.deletePlaylist(accessToken, id)
         if (job.aborted) break
-        done++
-        subject.next({ data: { done, total, current: id } })
+        job.status.done++
+        job.status.deletedIds.push(id)
       } catch (err: unknown) {
         if (err instanceof HttpException && err.getStatus() === 429) {
-          subject.next({ data: { done, total, error: 'YouTube API quota exceeded — resets at midnight Pacific Time.', quotaExceeded: true } })
+          job.status.quotaExceeded = true
+          job.status.error = 'YouTube API quota exceeded — resets at midnight Pacific Time.'
           break
         }
-        failed++
+        job.status.failed++
       }
+
+      await new Promise(r => setTimeout(r, 300))
     }
 
-    const completionError = failed > 0
-      ? `${failed} playlist${failed === 1 ? '' : 's'} could not be deleted`
-      : undefined
-    subject.next({ data: { done, total, complete: true, error: completionError } })
-    subject.complete()
+    if (!job.status.error) {
+      const failed = job.status.failed
+      if (failed > 0) {
+        job.status.error = `${failed} playlist${failed === 1 ? '' : 's'} could not be deleted`
+      }
+    }
+    job.status.complete = true
     setTimeout(() => this.jobs.delete(jobId), 30_000)
   }
 }
