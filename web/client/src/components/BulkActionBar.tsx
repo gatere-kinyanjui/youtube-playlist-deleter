@@ -45,8 +45,8 @@ export function BulkActionBar({ count, total, onDelete, onSelectAll, onClear, on
           </button>
         </span>
       )}
-      <button className="btn btn-danger" onClick={onDelete}>Delete {count}</button>
-      <button className="btn btn-ghost" style={{color:'#aaa'}} onClick={onClear}>Clear</button>
+      <button className="btn btn-danger" onClick={onDelete} disabled={count === 0}>Delete {count}</button>
+      <button className="btn btn-ghost" onClick={onClear}>Clear</button>
     </div>
   )
 }
