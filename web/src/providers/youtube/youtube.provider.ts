@@ -8,9 +8,13 @@ export class YoutubeProvider extends BaseYoutubeProvider {
 
   async listPlaylists(accessToken: string): Promise<Playlist[]> {
     if (this.cache && this.cache.expiresAt > Date.now()) return this.cache.playlists
-    const playlists = await super.listPlaylists(accessToken)
-    this.cache = { playlists, expiresAt: Date.now() + 5 * 60 * 1000 }
-    return playlists
+    try {
+      const playlists = await super.listPlaylists(accessToken)
+      this.cache = { playlists, expiresAt: Date.now() + 5 * 60 * 1000 }
+      return playlists
+    } catch (err) {
+      throw this.toHttpException(err)
+    }
   }
 
   async deletePlaylist(accessToken: string, id: string): Promise<void> {

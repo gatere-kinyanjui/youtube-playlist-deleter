@@ -117,6 +117,6 @@
   .hamburger { display: flex; }
 }
 @media (max-width: 480px) {
-  .nav { padding: 0 14px; }
+  .nav { padding: 0 16px; }
   .menu-drawer .nav-link { font-size: 20px; padding: 18px 18px; }
 }

@@ -23,6 +23,6 @@
 @media (max-width: 480px) {
   :root {
     --nav-h:    60px;
-    --page-pad: 14px;
+    --page-pad: 16px;
   }
 }

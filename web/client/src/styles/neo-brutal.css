@@ -29,7 +29,7 @@
 .card {
   background: var(--surface); border: var(--border); box-shadow: var(--shadow);
 }
-.card-list  { padding: 0; overflow: hidden; }
+.card-list  { padding: 0; overflow: hidden; box-shadow: none; }
 .card-empty { padding: 40px 32px; text-align: center; }
 .card-empty-title { font-weight: 800; font-size: 18px; margin-bottom: 6px; }
 .card-empty-body  { font-size: 13px; color: #777; }
@@ -68,13 +68,15 @@
 /* ── Page layout ─────────────────────────────────────────────── */
 .page {
   max-width: var(--page-max); margin: 0 auto;
-  padding: 32px var(--page-pad) 160px;
+  padding: 48px var(--page-pad) 160px;
+  overflow-x: hidden;
 }
 .page-title {
   font-family: var(--font-display); font-weight: 900;
   font-size: clamp(36px, 9vw, 64px);
   letter-spacing: -0.04em; text-transform: uppercase;
-  line-height: 0.9; margin-bottom: 28px;
+  line-height: 0.95; margin-bottom: 32px;
+  text-align: center;
 }
 .page-header {
   display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;
@@ -185,18 +187,34 @@
   text-transform: uppercase; letter-spacing: 0.06em;
 }
 
+/* ── Touch: no hover jank ────────────────────────────────────── */
+@media (hover: none) {
+  .btn:hover        { transform: none; box-shadow: var(--shadow); }
+  .btn-ghost:hover  { transform: none; background: transparent; color: var(--ink); box-shadow: none; }
+  .btn-primary:hover, .btn-danger:hover { box-shadow: var(--shadow); }
+  .btn-secondary:hover { box-shadow: var(--shadow); }
+  .checkbox:hover   { transform: none; box-shadow: var(--shadow-sm); }
+  .input:hover      { box-shadow: var(--shadow); }
+  .nav-link:hover   { background: transparent; border-color: transparent; }
+  .playlist-row:hover { background: var(--surface); }
+  .dg-header:hover  { background: var(--bg); }
+  .dg-row:hover     { background: transparent; }
+  .hamburger:hover  { transform: none; box-shadow: var(--shadow-sm); }
+}
+
 /* ── Login page ──────────────────────────────────────────────── */
 .login-wrap {
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 40px;
   background: var(--bg); padding: 24px;
 }
-.login-hero { text-align: center; max-width: 480px; }
+.login-hero { text-align: center; width: 100%; max-width: 480px; }
 .login-chip { font-size: 14px; margin-bottom: 20px; }
 .login-title {
   font-family: var(--font-display); font-size: clamp(44px, 12vw, 80px);
   font-weight: 900; line-height: 0.9;
   letter-spacing: -0.04em; text-transform: uppercase; margin-bottom: 20px;
+  text-align: center;
 }
 .login-sub  { font-size: 17px; font-weight: 600; color: #444; letter-spacing: 0.01em; }
 .login-cta  { font-size: 17px; padding: 16px 40px; }
